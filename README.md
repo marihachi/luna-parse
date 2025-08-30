@@ -1,5 +1,5 @@
 # lunaparse.js
-A code generator of recursive descent parser for JavaScript.
+A template generator of recursive descent parser for JavaScript.
 
 - Recursive descent parser
 - Expression parser : Operator-precedence parser (Pratt parser)
