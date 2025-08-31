@@ -74,7 +74,7 @@ export function throwIfNotExpected(self: Scan, expectedKind: string): void {
     }
 }
 
-export function expect(self: Scan, kind: string): void {
-    throwIfNotExpected(self, kind);
+export function expect(self: Scan, expectedKind: string): void {
+    throwIfNotExpected(self, expectedKind);
     nextToken(self);
 }
