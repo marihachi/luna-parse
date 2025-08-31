@@ -32,10 +32,10 @@ export function nextToken(self: Scan): void {
         let char = getChar(self.input);
         if (char === "=") {
             nextChar(self.input);
-            self.token = { kind: "=" };
+            self.token = { kind: "'='" };
         } else if (char === "/") {
             nextChar(self.input);
-            self.token = { kind: "/" };
+            self.token = { kind: "'/'" };
         } else {
             let tokenValue = char;
             nextChar(self.input);
