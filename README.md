@@ -1,5 +1,5 @@
 # lunaparse.js
-A template generator of recursive descent parser for JavaScript.
+A parser generator of recursive descent parser for JavaScript.
 
 ## What is lunaparse?
 lunaparse uses languages derived from PEG to describe grammars.\
