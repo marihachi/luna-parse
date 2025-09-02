@@ -1,5 +1,6 @@
 # lunaparse.js
-Generates a recursive descent parser that can be easily modified manually.
+Generates a recursive descent parser that can be easily modified manually.\
+手動で変更しやすい再帰下降パーサーを生成します。
 
 ## What is lunaparse?
 lunaparse uses languages derived from PEG to describe grammars.\
