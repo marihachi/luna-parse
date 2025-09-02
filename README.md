@@ -11,7 +11,7 @@ lunaparse also provides an expression parser that can efficiently parse expressi
 ## lunaparseって何？
 lunaparseはPEGから派生した言語を用いて文法を記述します。\
 従来のパーサジェネレータでは、自動的に生成されたパーサを手動で変更しやすくは作られていませんでした。\
-lunaparseが生成する再帰下降パーサは、後から容易に修正できます。
+lunaparseが生成する再帰下降パーサは、後から容易に修正できます。\
 lunaparseは式を効率的に解析できる式パーサも提供します。式パーサとしてはOperator-precedence parser (Precedence Climbing)に基づくパーサが生成されます。
 
 ## License
