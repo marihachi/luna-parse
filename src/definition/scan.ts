@@ -1,80 +1,86 @@
-import { Input, eof, getChar, nextChar } from "./input.js";
+import { Input } from "./input.js";
 
-export type Token = {
-    kind: string;
-    value?: string;
-};
+export type TokenKind = "EOF" | "Equal" | "Slash" | "Word";
+export type Token = [TokenKind] | [TokenKind, string];
 
-export type Scan = {
+export class Scan {
     input: Input;
     token: Token | undefined;
-};
 
-export function initScan(input: Input): Scan {
-    const s: Scan = {
-        input,
-        token: undefined,
-    };
-    nextToken(s);
-    return s;
-}
-
-export function nextToken(self: Scan): void {
-    // skip spaces
-    while (!eof(self.input)) {
-        const char = getChar(self.input);
-        if (!(char === " " || char === "\r" || char === "\n" || char === "\t")) {
-            break;
-        }
+    constructor(input: Input) {
+        this.input = input;
+        this.token = undefined;
+        this.nextToken();
     }
-    // トークンの種類を判別してセットする
-    if (!eof(self.input)) {
-        let char = getChar(self.input);
-        if (char === "=") {
-            nextChar(self.input);
-            self.token = { kind: "'='" };
-        } else if (char === "/") {
-            nextChar(self.input);
-            self.token = { kind: "'/'" };
-        } else {
-            let tokenValue = char;
-            nextChar(self.input);
-            while (!eof(self.input)) {
-                tokenValue += char;
-                nextChar(self.input);
+
+    nextToken() {
+        const input = this.input;
+
+        // skip spaces
+        while (!input.eof()) {
+            const char = input.getChar();
+            if (!(char === " " || char === "\r" || char === "\n" || char === "\t")) {
+                break;
             }
-            self.token = { kind: "word", value: tokenValue };
         }
-    } else {
-        self.token = undefined;
+        // トークンの種類を判別してセットする
+        if (!input.eof()) {
+            let char = input.getChar();
+            if (char === "=") {
+                input.nextChar();
+                this.token = ["Equal"];
+            } else if (char === "/") {
+                input.nextChar();
+                this.token = ["Slash"];
+            } else {
+                let tokenValue = char;
+                input.nextChar();
+                while (!input.eof()) {
+                    tokenValue += input.getChar();
+                    input.nextChar();
+                }
+                this.token = ["Word", tokenValue];
+            }
+        } else {
+            this.token = undefined;
+        }
+    }
+
+    getToken(): Token {
+        // トークンがundefinedの場合はEOFとして扱う
+        if (this.token === undefined) {
+            return ["EOF"];
+        }
+        return this.token;
+    }
+
+    is(kind: string): boolean {
+        const token = this.getToken();
+        return token[0] === kind;
+    }
+
+    getValue(): string {
+        const token = this.getToken();
+        if (token.length < 2) {
+            throw new Error("No token value");
+        }
+        return token[1]!;
+    }
+
+    throwIfNotExpected(expectedKind: TokenKind): void {
+        if (!this.is(expectedKind)) {
+            throw new Error(`Expected ${getTokenName(expectedKind)}, but got ${getTokenName(this.getToken()[0])}`);
+        }
+    }
+
+    expect(expectedKind: TokenKind): void {
+        this.throwIfNotExpected(expectedKind);
+        this.nextToken();
     }
 }
 
-export function getToken(self: Scan): Token {
-    // トークンがundefinedの場合はEOFとして扱う
-    if (self.token === undefined) {
-        return { kind: "EOF" };
-    }
-    return self.token;
-}
-
-export function is(self: Scan, kind: string): boolean {
-    const token = getToken(self);
-    return token.kind === kind;
-}
-
-export function getValue(self: Scan): string | undefined {
-    const token = getToken(self);
-    return token.kind === "word" ? token.value : undefined;
-}
-
-export function throwIfNotExpected(self: Scan, expectedKind: string): void {
-    if (!is(self, expectedKind)) {
-        throw new Error(`Expected ${expectedKind}, but got ${getToken(self).kind}`);
-    }
-}
-
-export function expect(self: Scan, expectedKind: string): void {
-    throwIfNotExpected(self, expectedKind);
-    nextToken(self);
+export function getTokenName(kind: TokenKind): string {
+    if (kind === "Equal") return '=';
+    if (kind === "Slash") return '/';
+    return kind;
 }
