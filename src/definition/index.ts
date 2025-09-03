@@ -1,10 +1,10 @@
-import { Input } from "./input.js";
+import { emit } from "./emit.js";
 import { parse } from "./parse.js";
-import { Scan } from "./scan.js";
+import { lowering } from "./lowering.js";
 
-function main() {
-    const input = new Input("a = b");
-    const scan = new Scan(input);
-    parse(scan);
+function main(): void {
+    parse("a = b");
+    lowering();
+    emit();
 }
 main();

@@ -1,9 +1,12 @@
+// 構文解析 Scanから取得したトークン列をhighTreeに変換する
+
 import { Scan } from "./scan.js";
 
 export type ParseState = {
 };
 
-export function parse(s: Scan): void {
+export function parse(source: string): void {
+    const s = new Scan(source);
     const state: ParseState = {};
 
     let rule;

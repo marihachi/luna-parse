@@ -1,5 +1,7 @@
-export type Emit = {};
+// lowTreeをコードとして出力する
 
-export function emit(e: Emit): void {
+export type EmitState = {};
 
+export function emit(): void {
+    const state: EmitState = {};
 }
