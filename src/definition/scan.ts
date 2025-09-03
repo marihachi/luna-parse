@@ -1,10 +1,9 @@
 import { Input } from "./input.js";
 
-export type TokenKind = "EOF" | "Equal" | "Slash" | "Word";
-export type Token = [TokenKind] | [TokenKind, string];
-
 export class Scan {
     input: Input;
+
+    /** NOTE: undefindはEOFを表します。 */
     token: Token | undefined;
 
     constructor(input: Input) {
@@ -16,38 +15,22 @@ export class Scan {
     nextToken() {
         const input = this.input;
 
-        // skip spaces
+        // spaces
         while (!input.eof()) {
             const char = input.getChar();
             if (!(char === " " || char === "\r" || char === "\n" || char === "\t")) {
                 break;
             }
         }
-        // トークンの種類を判別してセットする
+
         if (!input.eof()) {
-            let char = input.getChar();
-            if (char === "=") {
-                input.nextChar();
-                this.token = ["Equal"];
-            } else if (char === "/") {
-                input.nextChar();
-                this.token = ["Slash"];
-            } else {
-                let tokenValue = char;
-                input.nextChar();
-                while (!input.eof()) {
-                    tokenValue += input.getChar();
-                    input.nextChar();
-                }
-                this.token = ["Word", tokenValue];
-            }
+           this.token = nextTokenInner(this);
         } else {
             this.token = undefined;
         }
     }
 
     getToken(): Token {
-        // トークンがundefinedの場合はEOFとして扱う
         if (this.token === undefined) {
             return ["EOF"];
         }
@@ -76,6 +59,30 @@ export class Scan {
     expect(expectedKind: TokenKind): void {
         this.throwIfNotExpected(expectedKind);
         this.nextToken();
+    }
+}
+
+export type Token = [TokenKind] | [TokenKind, string];
+
+export type TokenKind = "EOF" | "Equal" | "Slash" | "Word";
+
+function nextTokenInner(s: Scan): Token {
+    const input = s.input;
+    let char = input.getChar();
+    if (char === "=") {
+        input.nextChar();
+        return ["Equal"];
+    } else if (char === "/") {
+        input.nextChar();
+        return ["Slash"];
+    } else {
+        let tokenValue = char;
+        input.nextChar();
+        while (!input.eof()) {
+            tokenValue += input.getChar();
+            input.nextChar();
+        }
+        return ["Word", tokenValue];
     }
 }
 
