@@ -2,6 +2,7 @@
 
 export type EmitState = {};
 
-export function emit(): void {
+export function emit(): string {
     const state: EmitState = {};
+    return "";
 }
