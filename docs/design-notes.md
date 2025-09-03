@@ -9,14 +9,27 @@ sub2 = "b"
 
 output
 ```js
-function parseRule1(p) {
-    const { s } = p;
-    if (s.is("a")) {
-        return parseSub1(p);
+function parseRule1(s) {
+    if (matchSub1(s)) {
+        return parseSub1(s);
     }
-    if (s.is("b")) {
-        return parseSub2(p);
+    if (matchSub2(s)) {
+        return parseSub2(s);
     }
-    throwIfNotExpected(p, ["a", "b"]);
+    s.throwIfNotExpected(["a", "b"]);
+}
+
+function matchSub1(s) {
+    return s.is("a");
+}
+function parseSub1(s) {
+    s.nextToken();
+}
+
+function matchSub2(s) {
+    return s.is("b");
+}
+function parseSub2(s) {
+    s.nextToken();
 }
 ```
