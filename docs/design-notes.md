@@ -8,7 +8,7 @@ rule config = "config" ident ident
 rule ruleStatement = "rule" ident _* "=" _* expr
 rule exprBlock = "expression" _* ident " _* "{" _* exprLevel (_* exprLevel)* _* "}"
 rule exprLevel = "operator" _* "group" _* "{" _* exprOperator (_* exprOperator)* _* "}"
-rule exprOperator = ("prefix" | "infix" | "postfix") _* "operator"
+rule exprOperator = ("prefix" | "infix" | "postfix") _* "operator" ident
 rule item = ident | "."
 rule ident = ALPHA (ALPHA | NUMBER)*
 rule str = "\"" (!"\"" .)+ "\""
