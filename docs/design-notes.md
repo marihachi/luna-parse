@@ -1,35 +1,78 @@
-## OR
-
-input
+## lunaparseの文法
 ```
-rule1 = sub1 | sub2
-sub1 = "a"
-sub2 = "b"
+config skipSpacing false
+
+rule root = toplevel (_* toplevel)*
+rule toplevel = config | ruleStatement | exprBlock
+rule config = "config" ident ident
+rule ruleStatement = "rule" ident _* "=" _* expr
+rule exprBlock = "expression" _* ident " _* "{" _* exprLevel (_* exprLevel)* _* "}"
+rule exprLevel = "operator" _* "group" _* "{" _* exprOperator (_* exprOperator)* _* "}"
+rule exprOperator = ("prefix" | "infix" | "postfix") _* "operator"
+rule item = ident | "."
+rule ident = ALPHA (ALPHA | NUMBER)*
+rule str = "\"" (!"\"" .)+ "\""
+rule _ = " " | "\t" | "\r\n" | "\r" | "\n"
+
+expression expr {
+    atom item
+    operator group {
+        prefix operator "!"
+    }
+    operator group {
+        postfix operator "*"
+        postfix operator "+"
+        postfix operator "?"
+    }
+    operator group {
+        infix operator "|"
+        infix operator " "
+    }
+}
 ```
 
-output
+生成例
 ```js
-function parseRule1(s) {
-    if (matchSub1(s)) {
-        return parseSub1(s);
+function parseRoot(s) {
+    if (matchToplevel(s)) {
+        return parseToplevel(s);
     }
-    if (matchSub2(s)) {
-        return parseSub2(s);
-    }
-    s.throwIfNotExpected(["a", "b"]);
+    s.throwIfNotExpected(["config", "rule", "expression"]);
 }
 
-function matchSub1(s) {
-    return s.is("a");
+function matchToplevel(s) {
+    return s.is("config") || s.is("rule") || s.is("expression");
 }
-function parseSub1(s) {
+function parseToplevel(s) {
+    if (matchConfig(s)) {
+        return parseConfig(s);
+    }
+    if (matchConfig(s)) {
+        return parseConfig(s);
+    }
+    if (matchConfig(s)) {
+        return parseConfig(s);
+    }
+}
+
+function matchConfig(s) {
+    return s.is("config");
+}
+function parseConfig(s) {
     s.forward();
 }
 
-function matchSub2(s) {
-    return s.is("b");
+function matchRule(s) {
+    return s.is("rule");
 }
-function parseSub2(s) {
+function parseRule(s) {
+    s.forward();
+}
+
+function matchExpression(s) {
+    return s.is("expression");
+}
+function parseExpression(s) {
     s.forward();
 }
 ```
