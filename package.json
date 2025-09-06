@@ -1,0 +1,22 @@
+{
+  "name": "lunaparse",
+  "version": "0.1.0",
+  "description": "Generates a recursive descent parser that can be easily modified manually.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marihachi/lunaparse-js.git"
+  },
+  "author": "marihachi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marihachi/lunaparse-js/issues"
+  },
+  "homepage": "https://github.com/marihachi/lunaparse-js#readme"
+}
