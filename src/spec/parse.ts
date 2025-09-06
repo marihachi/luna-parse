@@ -25,9 +25,9 @@ function matchRule(s: Scan, state: ParseState): boolean {
 function parseRule(s: Scan, state: ParseState): Rule {
     s.throwIfNotExpected("Word");
     const left = s.getValue();
-    s.nextToken();
+    s.forward();
 
-    s.expect("Equal");
+    s.forwardExpect("Equal");
 
     let right: Ref | undefined;
     if (matchRef(s, state)) {
@@ -50,7 +50,7 @@ function matchRef(s: Scan, state: ParseState): boolean {
 
 function parseRef(s: Scan, state: ParseState): Ref {
     const name = s.getValue();
-    s.nextToken();
+    s.forward();
 
     return { kind: "Ref", name };
 }

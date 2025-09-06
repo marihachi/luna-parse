@@ -23,13 +23,13 @@ function matchSub1(s) {
     return s.is("a");
 }
 function parseSub1(s) {
-    s.nextToken();
+    s.forward();
 }
 
 function matchSub2(s) {
     return s.is("b");
 }
 function parseSub2(s) {
-    s.nextToken();
+    s.forward();
 }
 ```
