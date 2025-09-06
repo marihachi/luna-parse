@@ -5,14 +5,16 @@ import { Scan } from "./scan.js";
 export type ParseState = {
 };
 
-export function parse(source: string): void {
+export function parse(source: string): Rule[] {
     const s = new Scan(source);
     const state: ParseState = {};
 
-    let rule;
+    let rules: Rule[] = [];
     if (matchRule(s, state)) {
-        rule = parseRule(s, state);
+        rules.push(parseRule(s, state));
     }
+
+    return rules;
 }
 
 

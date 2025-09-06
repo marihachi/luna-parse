@@ -13,6 +13,13 @@ export class Input {
         this.column = 1;
     }
 
+    initialize(source: string) {
+        this.source = source;
+        this.index = 0;
+        this.line = 1;
+        this.column = 1;
+    }
+
     eof(): boolean {
         return this.index >= this.source.length;
     }
@@ -51,12 +58,13 @@ export class Scan {
     tokens: Token[];
 
     constructor(source: string) {
-        this.initialize(source);
+        this.input = new Input(source);
+        this.tokens = [];
     }
 
     initialize(source: string) {
-        this.input = new Input(source);
-        this.tokens = [];
+        this.input.initialize(source);
+        this.tokens.length = 0;
     }
 
     forwardExpect(expectedToken: TokenKind): void {

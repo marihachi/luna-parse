@@ -7,7 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "debug": "node ./build/debug.js"
   },
   "repository": {
     "type": "git",
@@ -18,5 +19,9 @@
   "bugs": {
     "url": "https://github.com/marihachi/lunaparse-js/issues"
   },
-  "homepage": "https://github.com/marihachi/lunaparse-js#readme"
+  "homepage": "https://github.com/marihachi/lunaparse-js#readme",
+  "dependencies": {
+    "@types/node": "^24.3.1",
+    "typescript": "^5.9.2"
+  }
 }
