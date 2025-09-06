@@ -9,7 +9,7 @@ rule ruleStatement = "rule" ident _* "=" _* expr
 rule exprBlock = "expression" _* ident " _* "{" _* exprLevel (_* exprLevel)* _* "}"
 rule exprLevel = "operator" _* "group" _* "{" _* exprOperator (_* exprOperator)* _* "}"
 rule exprOperator = ("prefix" | "infix" | "postfix") _* "operator" ident
-rule item = ident | "."
+rule item = ident | "." | "(" expr ")"
 rule ident = ALPHA (ALPHA | NUMBER)*
 rule str = "\"" (!"\"" .)+ "\""
 rule _ = " " | "\t" | "\r\n" | "\r" | "\n"
@@ -41,36 +41,36 @@ function parseRoot(s) {
 }
 
 function matchToplevel(s) {
-    return s.is("config") || s.is("rule") || s.is("expression");
+    return s.isWord("config") || s.isWord("rule") || s.isWord("expression");
 }
 function parseToplevel(s) {
     if (matchConfig(s)) {
         return parseConfig(s);
     }
-    if (matchConfig(s)) {
-        return parseConfig(s);
+    if (matchRule(s)) {
+        return parseRule(s);
     }
-    if (matchConfig(s)) {
-        return parseConfig(s);
+    if (matchExpression(s)) {
+        return parseExpression(s);
     }
 }
 
 function matchConfig(s) {
-    return s.is("config");
+    return s.isWord("config");
 }
 function parseConfig(s) {
     s.forward();
 }
 
 function matchRule(s) {
-    return s.is("rule");
+    return s.isWord("rule");
 }
 function parseRule(s) {
     s.forward();
 }
 
 function matchExpression(s) {
-    return s.is("expression");
+    return s.isWord("expression");
 }
 function parseExpression(s) {
     s.forward();
