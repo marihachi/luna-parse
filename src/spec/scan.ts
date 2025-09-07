@@ -161,17 +161,46 @@ export class Scan {
                 return TOKEN("Equal");
             } else if (char === "|") {
                 input.nextChar();
-                return TOKEN("Or");
-            } else if (/^[a-z0-9]$/.test(char)) {
-                let tokenValue = char;
+                return TOKEN("Pipe");
+            } else if (char === "*") {
                 input.nextChar();
-                while (!input.eof()) {
-                    char = input.getChar();
-                    if (!/^[a-z0-9]$/.test(char)) break;
-                    tokenValue += char;
+                return TOKEN("Asterisk");
+            } else if (char === "+") {
+                input.nextChar();
+                return TOKEN("Plus");
+            } else if (char === "!") {
+                input.nextChar();
+                return TOKEN("Exclam");
+            } else if (char === "?") {
+                input.nextChar();
+                return TOKEN("Question");
+            } else if (char === "{") {
+                input.nextChar();
+                return TOKEN("OpenBracket");
+            } else if (char === "}") {
+                input.nextChar();
+                return TOKEN("CloseBracket");
+            } else if (/^[a-z0-9]$/.test(char)) {
+                let buf = "";
+                buf += char;
+                input.nextChar();
+                while (!input.eof() && /^[a-z0-9]$/.test(input.getChar())) {
+                    buf += input.getChar();
                     input.nextChar();
                 }
-                return TOKEN("Word", { value: tokenValue });
+                return TOKEN("Word", { value: buf });
+            } else if (char === "\"") {
+                let buf = "";
+                input.nextChar();
+                while (!input.eof()) {
+                    if (input.getChar() === "\"") break;
+                    buf += input.getChar();
+                    input.nextChar();
+                }
+                if (!input.eof()) {
+                    input.nextChar();
+                }
+                return TOKEN("String", { value: buf });
             } else {
                 this.throwSyntaxError(`unexpected char '${char}'`);
             }
@@ -194,7 +223,7 @@ export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: 
     };
 }
 
-export type TokenKind = "EOF" | "Equal" | "Or" | "Word";
+export type TokenKind = "EOF" | "Equal" | "Pipe" | "Asterisk" | "Plus" | "Exclam" | "Question" | "OpenBracket" | "CloseBracket" | "Word" | "String";
 
 type TokenKindSpecifier = {
     kind?: TokenKind;
@@ -204,16 +233,24 @@ type TokenKindSpecifier = {
 export function getTokenString(specifier: TokenKindSpecifier): string {
     let kind: TokenKind;
     let value: string | undefined;
-    if (specifier.value) {
+    if (specifier.kind) {
+        kind = specifier.kind;
+        value = specifier.value;
+    } else if (specifier.value) {
         kind = "Word";
         value = specifier.value;
-    } else if (specifier.kind) {
-        kind = specifier.kind;
     } else {
         throw new Error("invalid arguments");
     }
-    if (kind === "Equal") return "'='";
-    if (kind === "Or") return "'|'";
-    if (kind === "Word" && value != null) return `'${value}'`;
+    if (kind === "Equal") return "`=`";
+    if (kind === "Pipe") return "`|`";
+    if (kind === "Asterisk") return "`*`";
+    if (kind === "Plus") return "`+`";
+    if (kind === "Exclam") return "`!`";
+    if (kind === "Question") return "`?`";
+    if (kind === "OpenBracket") return "`{`";
+    if (kind === "CloseBracket") return "`}`";
+    if (kind === "Word" && value != null) return `\`${value}\``;
+    if (kind === "String") return `\`"${value}"\``;
     return kind;
 }
