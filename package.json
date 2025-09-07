@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Generates a recursive descent parser that can be easily modified manually.",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "doc": "docs"
   },

@@ -1,5 +1,7 @@
 // 字句解析 入力文字列をトークン列に変換する
 
+import { logger } from "../utils/logger.js";
+
 export class Input {
     source: string;
     index: number;
@@ -74,7 +76,7 @@ export class Scan {
 
     throwIfNotExpected(expectedKind: TokenKind): void {
         if (!this.is(expectedKind)) {
-            throw new Error(`Expected ${getTokenString({ kind: expectedKind })}, but got ${getTokenString(this.getToken())}`);
+            this.throwSyntaxError(`Expected ${getTokenString({ kind: expectedKind })}, but got ${getTokenString(this.getToken())}`);
         }
     }
 
@@ -88,10 +90,13 @@ export class Scan {
     getToken(offset: number = 0): Token {
         // 指定位置のトークンまで読まれてなければ読み取る
         while (this.tokens.length <= offset) {
-            this.tokens.push(this.readToken());
+            const token = this.readToken();
+            logger.print(`token ${token.kind} ${token.value}`);
+            this.tokens.push(token);
         }
         // 指定位置のトークンを返す
-        return this.tokens[offset];
+        const resultToken = this.tokens[offset];
+        return resultToken;
     }
 
     getValue(offset: number = 0): string {
@@ -119,8 +124,12 @@ export class Scan {
 
     throwIfNotExpectedWord(expectedWord: string): void {
         if (!this.isWord(expectedWord)) {
-            throw new Error(`Expected ${getTokenString({ value: expectedWord })}, but got ${getTokenString(this.getToken())}`);
+            this.throwSyntaxError(`Expected ${getTokenString({ value: expectedWord })}, but got ${getTokenString(this.getToken())}`);
         }
+    }
+
+    throwSyntaxError(message: string): never {
+        throw new Error(`${message} (${this.input.line}:${this.input.column})`);
     }
 
     private readToken(): Token {
@@ -153,14 +162,18 @@ export class Scan {
             } else if (char === "|") {
                 input.nextChar();
                 return TOKEN("Or");
-            } else {
+            } else if (/^[a-z0-9]$/.test(char)) {
                 let tokenValue = char;
                 input.nextChar();
                 while (!input.eof()) {
-                    tokenValue += input.getChar();
+                    char = input.getChar();
+                    if (!/^[a-z0-9]$/.test(char)) break;
+                    tokenValue += char;
                     input.nextChar();
                 }
                 return TOKEN("Word", { value: tokenValue });
+            } else {
+                this.throwSyntaxError(`unexpected char '${char}'`);
             }
         }
     }
