@@ -138,6 +138,8 @@ export class Scan {
             } else if ([" ", "\t"].includes(input.getChar())) {
                 spaces.push(input.getChar());
                 input.nextChar();
+            } else {
+                break;
             }
         }
 
