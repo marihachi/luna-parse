@@ -7,7 +7,7 @@ rule toplevel = config | ruleStatement | exprBlock
 rule config = "config" ident ident
 rule ruleStatement = "rule" ident _* "=" _* expr
 rule exprBlock = "expression" _* ident " _* "{" _* exprLevel (_* exprLevel)* _* "}"
-rule exprLevel = "operator" _* "group" _* "{" _* exprOperator (_* exprOperator)* _* "}"
+rule exprLevel = "level" _* "{" _* exprOperator (_* exprOperator)* _* "}"
 rule exprOperator = ("prefix" | "infix" | "postfix") _* "operator" ident
 rule item = ident | "." | "(" expr ")"
 rule ident = ALPHA (ALPHA | NUMBER)*
@@ -16,15 +16,15 @@ rule _ = " " | "\t" | "\r\n" | "\r" | "\n"
 
 expression expr {
     atom item
-    operator group {
+    level {
         prefix operator "!"
     }
-    operator group {
+    level {
         postfix operator "*"
         postfix operator "+"
         postfix operator "?"
     }
-    operator group {
+    level {
         infix operator "|"
         infix operator " "
     }

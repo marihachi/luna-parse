@@ -103,19 +103,53 @@ function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
 
     s.forwardExpect("OpenBracket");
 
+    //parseExprItem(s, state);
+    //parseOperatorGroup(s, state);
+
     s.forwardExpect("CloseBracket");
 
     return { kind: "ExpressionDecl" };
 }
 
 
-// TODO: operator group
+function matchOperatorGroup(s: Scan, state: ParseState): boolean {
+    return s.isWord("level");
+}
+
+function parseOperatorGroup(s: Scan, state: ParseState) {
+    s.forward();
+
+    s.forwardExpect("OpenBracket");
+
+    parseOperator(s, state);
+
+    s.forwardExpect("CloseBracket");
+}
 
 
-// TODO: operator
+function matchOperator(s: Scan, state: ParseState): boolean {
+    return s.isWord("prefix") || s.isWord("infix") || s.isWord("postfix");
+}
+
+function parseOperator(s: Scan, state: ParseState) {
+    const opKind = s.getValue();
+    s.forward();
+
+    s.forwardExpectWord("operator");
+
+    s.throwIfNotExpected("String");
+}
 
 
-// TODO: item
+function matchExprItem(s: Scan, state: ParseState): boolean {
+    return s.isWord("atom");
+}
+
+function parseExprItem(s: Scan, state: ParseState) {
+    s.forward();
+
+    parseIdent(s, state);
+}
 
 
 export type Ident = { kind: "Ident"; name: string; };
