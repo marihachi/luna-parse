@@ -32,13 +32,13 @@ expression expr {
 ```
 
 ## What is lunaparse?
-lunaparse uses languages derived from PEG to describe grammars.\
+lunaparse uses languages derived from BNF to describe grammars.\
 With traditional parser generators are generally not designed to make it easy to manually modify the generated parsers. Consequently, hand-writing parsers without using a parser generator was often easier to maintain.\
 However, since lunaparse generates recursive descent parsers, they can be easily modified later.\
 lunaparse also provides an expression parser that can efficiently parse expressions. An expression parser based on Operator-precedence parser (Precedence Climbing) is generated.
 
 ## lunaparseって何？
-lunaparseはPEGから派生した言語を用いて文法を記述します。\
+lunaparseはBNFから派生した言語を用いて文法を記述します。\
 一般的に、従来のパーサージェネレータは生成されたパーサーを手動で変更しやすくは作られていません。そのため、パーサージェネレータを使わずにパーサーを手書きする方がメンテナンスがしやすくなっていました。\
 しかし、lunaparseは再帰下降パーサを生成するので、後から容易に修正できます。\
 lunaparseは式を効率的に解析できる式パーサも提供します。式パーサとしてはOperator-precedence parser (Precedence Climbing)に基づくパーサが生成されます。
