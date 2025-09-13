@@ -1,7 +1,5 @@
 // 字句解析 入力文字列をトークン列に変換する
 
-import { logger } from "../utils/logger.js";
-
 export class Input {
     source: string;
     index: number;
@@ -69,14 +67,23 @@ export class Scan {
         this.tokens.length = 0;
     }
 
-    forwardExpect(expectedToken: TokenKind): void {
-        this.throwIfNotExpected(expectedToken);
-        this.forward();
+    forwardExpect(...specifiers: TokenSpecifier[]): void {
+        for (let i = 0; i < specifiers.length; i++) {
+            this.throwIfNotExpectedOne(specifiers[i], i);
+            this.forward();
+        }
     }
 
-    throwIfNotExpected(expectedKind: TokenKind): void {
-        if (!this.is(expectedKind)) {
-            this.throwSyntaxError(`Expected ${getTokenString({ kind: expectedKind })}, but got ${getTokenString(this.getToken())}`);
+    throwIfNotExpected(...specifiers: TokenSpecifier[]): void {
+        for (let i = 0; i < specifiers.length; i++) {
+            this.throwIfNotExpectedOne(specifiers[i], i);
+        }
+    }
+
+    private throwIfNotExpectedOne(specifier: TokenSpecifier, offset: number = 0): void {
+        if (!this.isOne(specifier, offset)) {
+            const current: TokenSpecifier = { token: this.getToken(offset) };
+            this.throwSyntaxError(`Expected ${getTokenString(specifier)}, but got ${getTokenString(current)}`);
         }
     }
 
@@ -91,7 +98,7 @@ export class Scan {
         // 指定位置のトークンまで読まれてなければ読み取る
         while (this.tokens.length <= offset) {
             const token = this.readToken();
-            logger.print(`token ${token.kind} ${token.value}`);
+            // logger.print(`token ${token.kind} ${token.value}`);
             this.tokens.push(token);
         }
         // 指定位置のトークンを返す
@@ -107,24 +114,23 @@ export class Scan {
         return token.value;
     }
 
-    is(kind: TokenKind, offset: number = 0): boolean {
+    is(...specifiers: TokenSpecifier[]): boolean {
+        for (let i = 0; i < specifiers.length; i++) {
+            if (!this.isOne(specifiers[i], i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private isOne(specifier: TokenSpecifier, offset: number = 0): boolean {
         const token = this.getToken(offset);
-        return token.kind === kind;
-    }
-
-    isWord(word: string, offset: number = 0): boolean {
-        const token = this.getToken(offset);
-        return token.kind === "Word" && token.value === word;
-    }
-
-    forwardExpectWord(expectedWord: string): void {
-        this.throwIfNotExpectedWord(expectedWord);
-        this.forward();
-    }
-
-    throwIfNotExpectedWord(expectedWord: string): void {
-        if (!this.isWord(expectedWord)) {
-            this.throwSyntaxError(`Expected ${getTokenString({ value: expectedWord })}, but got ${getTokenString(this.getToken())}`);
+        if (specifier.kind != null) {
+            return token.kind === specifier.kind;
+        } else if (specifier.word != null) {
+            return token.kind === "Word" && token.value === specifier.word;
+        } else {
+            return token.kind === specifier.token.kind && token.value === specifier.token.value;
         }
     }
 
@@ -225,22 +231,31 @@ export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: 
 
 export type TokenKind = "EOF" | "Equal" | "Pipe" | "Asterisk" | "Plus" | "Exclam" | "Question" | "OpenBracket" | "CloseBracket" | "Word" | "String";
 
-type TokenKindSpecifier = {
-    kind?: TokenKind;
-    value?: string;
+export type TokenSpecifier = {
+    kind: TokenKind;
+    word?: undefined;
+    token?: undefined;
+} | {
+    word: string;
+    kind?: undefined;
+    token?: undefined;
+} | {
+    token: Token;
+    kind?: undefined;
+    word?: undefined;
 };
 
-export function getTokenString(specifier: TokenKindSpecifier): string {
+export function getTokenString(specifier: TokenSpecifier): string {
     let kind: TokenKind;
     let value: string | undefined;
-    if (specifier.kind) {
+    if (specifier.kind != null) {
         kind = specifier.kind;
-        value = specifier.value;
-    } else if (specifier.value) {
+    } else if (specifier.word != null) {
         kind = "Word";
-        value = specifier.value;
+        value = specifier.word;
     } else {
-        throw new Error("invalid arguments");
+        kind = specifier.token.kind;
+        value = specifier.token.value;
     }
     if (kind === "Equal") return "`=`";
     if (kind === "Pipe") return "`|`";

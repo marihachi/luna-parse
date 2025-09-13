@@ -10,10 +10,10 @@ export function parse(source: string): Toplevel[] {
     const state: ParseState = {};
 
     let members: Toplevel[] = [];
-    while (matchToplevel(s, state)) {
+    while (s.is({ word: "config" }) || s.is({ word: "rule" }) || s.is({ word: "expression" })) {
         members.push(parseToplevel(s, state));
     }
-    s.forwardExpect("EOF");
+    s.forwardExpect({ kind: "EOF" });
 
     return members;
 }
@@ -21,38 +21,30 @@ export function parse(source: string): Toplevel[] {
 
 export type Toplevel = ConfigDecl | RuleDecl | ExpressionDecl;
 
-function matchToplevel(s: Scan, state: ParseState): boolean {
-    return s.isWord("config") || s.isWord("rule") || s.isWord("expression");
-}
-
 function parseToplevel(s: Scan, state: ParseState): Toplevel {
-    switch (s.getValue()) {
-        case "config":
-            return parseConfigDecl(s, state);
-        case "rule":
-            return parseRuleDecl(s, state);
-        case "expression":
-            return parseExpressionDecl(s, state);
-        default:
-            throw new Error("unexpected token");
+    if (s.is({ word: "config" })) {
+        return parseConfigDecl(s, state);
     }
+    if (s.is({ word: "rule" })) {
+        return parseRuleDecl(s, state);
+    }
+    if (s.is({ word: "expression" })) {
+        return parseExpressionDecl(s, state);
+    }
+    throw new Error("unexpected token");
 }
 
 
 export type ConfigDecl = { kind: "ConfigDecl"; };
 
-function matchConfigDecl(s: Scan, state: ParseState): boolean {
-    return s.isWord("config");
-}
-
 function parseConfigDecl(s: Scan, state: ParseState): ConfigDecl {
     s.forward();
 
-    s.throwIfNotExpected("Word");
+    s.throwIfNotExpected({ kind: "Word" });
     const name = s.getValue();
     s.forward();
 
-    s.throwIfNotExpected("Word");
+    s.throwIfNotExpected({ kind: "Word" });
     const value = s.getValue();
     s.forward();
 
@@ -62,21 +54,17 @@ function parseConfigDecl(s: Scan, state: ParseState): ConfigDecl {
 
 export type RuleDecl = { kind: "RuleDecl"; left: string; right: Ident };
 
-function matchRuleDecl(s: Scan, state: ParseState): boolean {
-    return s.isWord("rule");
-}
-
 function parseRuleDecl(s: Scan, state: ParseState): RuleDecl {
     s.forward();
 
-    s.throwIfNotExpected("Word");
+    s.throwIfNotExpected({ kind: "Word" });
     const left = s.getValue();
     s.forward();
 
-    s.forwardExpect("Equal");
+    s.forwardExpect({ kind: "Equal" });
 
     let right: Ident | undefined;
-    if (matchIdent(s, state)) {
+    if (s.is({ kind: "Word" })) {
         right = parseIdent(s, state);
     }
 
@@ -90,73 +78,77 @@ function parseRuleDecl(s: Scan, state: ParseState): RuleDecl {
 
 export type ExpressionDecl = { kind: "ExpressionDecl"; };
 
-function matchExpressionDecl(s: Scan, state: ParseState): boolean {
-    return s.isWord("expression");
-}
-
 function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
     s.forward();
 
-    s.throwIfNotExpected("Word");
+    s.throwIfNotExpected({ kind: "Word" });
     const left = s.getValue();
     s.forward();
 
-    s.forwardExpect("OpenBracket");
+    s.forwardExpect({ kind: "OpenBracket" });
 
-    //parseExprItem(s, state);
-    //parseOperatorGroup(s, state);
+    let item: OperatorLevel | ExprItem;
+    if (s.is({ word: "atom" })) {
+        item = parseExprItem(s, state);
+    } else if (s.is({ word: "level" })) {
+        item = parseOperatorLevel(s, state);
+    } else {
+        s.throwSyntaxError("unexpected token");
+    }
 
-    s.forwardExpect("CloseBracket");
+    s.forwardExpect({ kind: "CloseBracket" });
 
     return { kind: "ExpressionDecl" };
 }
 
 
-function matchOperatorGroup(s: Scan, state: ParseState): boolean {
-    return s.isWord("level");
-}
+export type ExprItem = { kind: "ExprItem"; };
 
-function parseOperatorGroup(s: Scan, state: ParseState) {
+function parseExprItem(s: Scan, state: ParseState): ExprItem {
     s.forward();
 
-    s.forwardExpect("OpenBracket");
+    if (s.is({ kind: "Word" })) {
+        parseIdent(s, state);
+    }
 
-    parseOperator(s, state);
-
-    s.forwardExpect("CloseBracket");
+    return { kind: "ExprItem" };
 }
 
 
-function matchOperator(s: Scan, state: ParseState): boolean {
-    return s.isWord("prefix") || s.isWord("infix") || s.isWord("postfix");
+export type OperatorLevel = { kind: "OperatorLevel"; };
+
+function parseOperatorLevel(s: Scan, state: ParseState): OperatorLevel {
+    s.forward();
+
+    s.forwardExpect({ kind: "OpenBracket" });
+
+    if (s.is({ word: "prefix" }) || s.is({ word: "infix" }) || s.is({ word: "postfix" })) {
+        parseOperatorItem(s, state);
+    } else {
+        s.throwSyntaxError("unexpected token");
+    }
+
+    s.forwardExpect({ kind: "CloseBracket" });
+
+    return { kind: "OperatorLevel" };
 }
 
-function parseOperator(s: Scan, state: ParseState) {
+
+export type OperatorItem = { kind: "OperatorItem"; };
+
+function parseOperatorItem(s: Scan, state: ParseState): OperatorItem {
     const opKind = s.getValue();
     s.forward();
 
-    s.forwardExpectWord("operator");
+    s.forwardExpect({ word: "operator" });
 
-    s.throwIfNotExpected("String");
-}
+    s.throwIfNotExpected({ kind: "String" });
 
-
-function matchExprItem(s: Scan, state: ParseState): boolean {
-    return s.isWord("atom");
-}
-
-function parseExprItem(s: Scan, state: ParseState) {
-    s.forward();
-
-    parseIdent(s, state);
+    return { kind: "OperatorItem" };
 }
 
 
 export type Ident = { kind: "Ident"; name: string; };
-
-function matchIdent(s: Scan, state: ParseState): boolean {
-    return s.is("Word");
-}
 
 function parseIdent(s: Scan, state: ParseState): Ident {
     const name = s.getValue();
