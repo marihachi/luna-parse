@@ -66,10 +66,8 @@ function parseRuleDecl(s: Scan, state: ParseState): RuleDecl {
     let right: Ident | undefined;
     if (s.match({ kind: "Word" })) {
         right = parseIdent(s, state);
-    }
-
-    if (!right) {
-        throw new Error("Expected right-side tokens");
+    } else {
+        s.throwSyntaxError("unexpected token");
     }
 
     return { kind: "RuleDecl", left, right };
@@ -87,7 +85,11 @@ function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
-    let item: OperatorLevel | ExprItem = parseExpressionDecl_0(s, state);
+    if (s.match({ word: "atom" }) || s.match({ word: "level" })) {
+        let item: OperatorLevel | ExprItem = parseExpressionDecl_0(s, state);
+    } else {
+        s.throwSyntaxError("unexpected token");
+    }
 
     s.forwardWithExpect({ kind: "CloseBracket" });
 

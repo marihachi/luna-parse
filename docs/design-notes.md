@@ -31,48 +31,35 @@ expression expr {
 }
 ```
 
-生成例
-```js
-function parseRoot(s) {
-    if (matchToplevel(s)) {
-        return parseToplevel(s);
-    }
-    s.throwIfNotExpected(["config", "rule", "expression"]);
-}
-
-function matchToplevel(s) {
-    return s.isWord("config") || s.isWord("rule") || s.isWord("expression");
-}
-function parseToplevel(s) {
-    if (matchConfig(s)) {
-        return parseConfig(s);
-    }
-    if (matchRule(s)) {
-        return parseRule(s);
-    }
-    if (matchExpression(s)) {
-        return parseExpression(s);
+例
+```
+rule parent = sub*
+rule sub = sub1 | sub2
+rule sub1 = "sub1"
+rule sub2 = "sub2"
+```
+```ts
+function parseParent(s: Scan): Parent {
+    let children: Sub[] = [];
+    while (s.match({ word: "sub1" }) || s.match({ word: "sub2" })) {
+        children.push(parseSub(s));
     }
 }
-
-function matchConfig(s) {
-    return s.isWord("config");
+function parseSub(s: Scan): Sub {
+    if (s.match({ word: "sub1" })) {
+        return parseSub1(s);
+    } else if (s.match({ word: "sub2" })) {
+        return parseSub2(s);
+    } else {
+        s.throwSyntaxError("unexpected token");
+    }
 }
-function parseConfig(s) {
+function parseSub1(s: Scan): Sub1 {
     s.forward();
+    return { kind: "sub1" };
 }
-
-function matchRule(s) {
-    return s.isWord("rule");
-}
-function parseRule(s) {
+function parseSub2(s: Scan): Sub1 {
     s.forward();
-}
-
-function matchExpression(s) {
-    return s.isWord("expression");
-}
-function parseExpression(s) {
-    s.forward();
+    return { kind: "sub2" };
 }
 ```
