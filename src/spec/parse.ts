@@ -9,13 +9,14 @@ export function parse(source: string): Toplevel[] {
     const s = new Scan(source);
     const state: ParseState = {};
 
-    let members: Toplevel[] = [];
+    let children: Toplevel[] = [];
     while (s.is({ word: "config" }) || s.is({ word: "rule" }) || s.is({ word: "expression" })) {
-        members.push(parseToplevel(s, state));
+        children.push(parseToplevel(s, state));
     }
+
     s.forwardExpect({ kind: "EOF" });
 
-    return members;
+    return children;
 }
 
 
@@ -24,14 +25,13 @@ export type Toplevel = ConfigDecl | RuleDecl | ExpressionDecl;
 function parseToplevel(s: Scan, state: ParseState): Toplevel {
     if (s.is({ word: "config" })) {
         return parseConfigDecl(s, state);
-    }
-    if (s.is({ word: "rule" })) {
+    } else if (s.is({ word: "rule" })) {
         return parseRuleDecl(s, state);
-    }
-    if (s.is({ word: "expression" })) {
+    } else if (s.is({ word: "expression" })) {
         return parseExpressionDecl(s, state);
+    } else {
+        s.throwSyntaxError("unexpected token");
     }
-    throw new Error("unexpected token");
 }
 
 
@@ -87,18 +87,21 @@ function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
 
     s.forwardExpect({ kind: "OpenBracket" });
 
-    let item: OperatorLevel | ExprItem;
-    if (s.is({ word: "atom" })) {
-        item = parseExprItem(s, state);
-    } else if (s.is({ word: "level" })) {
-        item = parseOperatorLevel(s, state);
-    } else {
-        s.throwSyntaxError("unexpected token");
-    }
+    let item: OperatorLevel | ExprItem = parseExpressionDecl_0(s, state);
 
     s.forwardExpect({ kind: "CloseBracket" });
 
     return { kind: "ExpressionDecl" };
+}
+
+function parseExpressionDecl_0(s: Scan, state: ParseState): OperatorLevel | ExprItem {
+    if (s.is({ word: "atom" })) {
+        return parseExprItem(s, state);
+    } else if (s.is({ word: "level" })) {
+        return parseOperatorLevel(s, state);
+    } else {
+        s.throwSyntaxError("unexpected token");
+    }
 }
 
 
@@ -122,10 +125,9 @@ function parseOperatorLevel(s: Scan, state: ParseState): OperatorLevel {
 
     s.forwardExpect({ kind: "OpenBracket" });
 
-    if (s.is({ word: "prefix" }) || s.is({ word: "infix" }) || s.is({ word: "postfix" })) {
-        parseOperatorItem(s, state);
-    } else {
-        s.throwSyntaxError("unexpected token");
+    let children: OperatorItem[] = [];
+    while (s.is({ word: "prefix" }) || s.is({ word: "infix" }) || s.is({ word: "postfix" })) {
+        children.push(parseOperatorItem(s, state));
     }
 
     s.forwardExpect({ kind: "CloseBracket" });
