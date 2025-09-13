@@ -67,33 +67,6 @@ export class Scan {
         this.tokens.length = 0;
     }
 
-    forwardExpect(...specifiers: TokenSpecifier[]): void {
-        for (let i = 0; i < specifiers.length; i++) {
-            this.throwIfNotExpectedOne(specifiers[i], i);
-            this.forward();
-        }
-    }
-
-    throwIfNotExpected(...specifiers: TokenSpecifier[]): void {
-        for (let i = 0; i < specifiers.length; i++) {
-            this.throwIfNotExpectedOne(specifiers[i], i);
-        }
-    }
-
-    private throwIfNotExpectedOne(specifier: TokenSpecifier, offset: number = 0): void {
-        if (!this.isOne(specifier, offset)) {
-            const current: TokenSpecifier = { token: this.getToken(offset) };
-            this.throwSyntaxError(`Expected ${getTokenString(specifier)}, but got ${getTokenString(current)}`);
-        }
-    }
-
-    forward(): void {
-        // 現在のトークンが既に読まれていれば、現在のトークンを破棄
-        if (this.tokens.length > 0) {
-            this.tokens.splice(0, 1);
-        }
-    }
-
     getToken(offset: number = 0): Token {
         // 指定位置のトークンまで読まれてなければ読み取る
         while (this.tokens.length <= offset) {
@@ -114,23 +87,37 @@ export class Scan {
         return token.value;
     }
 
-    is(...specifiers: TokenSpecifier[]): boolean {
-        for (let i = 0; i < specifiers.length; i++) {
-            if (!this.isOne(specifiers[i], i)) {
-                return false;
-            }
+    /** 現在のトークンが指定した条件のトークンであるかを返す */
+    match(token: TokenSpecifier, offset: number = 0): boolean {
+        const current = this.getToken(offset);
+        if (token.kind != null) {
+            return current.kind === token.kind;
+        } else if (token.word != null) {
+            return current.kind === "Word" && current.value === token.word;
+        } else {
+            return current.kind === token.token.kind && current.value === token.token.value;
         }
-        return true;
     }
 
-    private isOne(specifier: TokenSpecifier, offset: number = 0): boolean {
-        const token = this.getToken(offset);
-        if (specifier.kind != null) {
-            return token.kind === specifier.kind;
-        } else if (specifier.word != null) {
-            return token.kind === "Word" && token.value === specifier.word;
-        } else {
-            return token.kind === specifier.token.kind && token.value === specifier.token.value;
+    /** 次に進む */
+    forward(): void {
+        // 現在のトークンが既に読まれていれば、現在のトークンを破棄
+        if (this.tokens.length > 0) {
+            this.tokens.splice(0, 1);
+        }
+    }
+
+    /** 期待した条件のトークンであるかを確認して次に進む */
+    forwardWithExpect(token: TokenSpecifier): void {
+        this.expect(token);
+        this.forward();
+    }
+
+    /** 期待したトークンであるかを確認する */
+    expect(token: TokenSpecifier, offset: number = 0): void {
+        if (!this.match(token, offset)) {
+            const current: TokenSpecifier = { token: this.getToken(offset) };
+            this.throwSyntaxError(`Expected ${getTokenString(token)}, but got ${getTokenString(current)}`);
         }
     }
 
