@@ -1,4 +1,4 @@
-// 構文解析 Scanから取得したトークン列をhighTreeに変換する
+// 構文解析 Scanから取得したトークン列をASTに変換する
 
 import { Scan } from "./scan.js";
 

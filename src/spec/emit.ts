@@ -1,4 +1,4 @@
-// lowTreeをコードとして出力する
+// IR Treeをコードとして出力する
 
 import { I_TopLevel } from "./analyze.js";
 

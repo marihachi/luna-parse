@@ -1,4 +1,4 @@
-// AST TreeからIR Treeを生成する
+// ASTからIR Treeを生成する
 
 import { A_Toplevel } from "./parse.js";
 
