@@ -1,6 +1,7 @@
 # lunaparse.js
 Generates a LL(k) predictive parser that can be easily modified manually.\
-手動で変更しやすいLL(k)の予言的パーサーを生成します。
+
+Under development!
 
 Grammar image:
 ```
@@ -36,6 +37,47 @@ lunaparse uses languages derived from BNF to describe grammars.\
 With traditional parser generators are generally not designed to make it easy to manually modify the generated parsers. Consequently, hand-writing parsers without using a parser generator was often easier to maintain.\
 However, since lunaparse generates recursive descent parsers, they can be easily modified later.\
 lunaparse also provides an expression parser that can efficiently parse expressions. An expression parser based on Operator-precedence parser (Precedence Climbing) is generated.
+
+## License
+MIT
+
+----
+
+ja-JP:
+
+# lunaparse.js
+手動で変更しやすいLL(k)の予言的パーサーを生成します。
+
+開発中！
+
+Grammar image:
+```
+var n1 = 2;
+var n2 = 3;
+show n1 * n2 + 1;
+```
+```
+config skipSpacing true
+
+rule root = topLevel+
+rule topLevel = declareVar | show
+rule declareVar = "var" name "=" expr ";"
+rule show = "show" expr ";"
+rule term = DIGIT+ | ident
+rule ident = ALPHA (ALPHA | DIGIT)*
+
+expression expr {
+    atom term
+    operator group {
+        infix operator "*"
+        infix operator "/"
+    }
+    operator group {
+        infix operator "+"
+        infix operator "-"
+    }
+}
+```
 
 ## lunaparseって何？
 lunaparseはBNFから派生した言語を用いて文法を記述します。\
