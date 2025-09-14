@@ -8,12 +8,7 @@ luna-parseにより生成されたパーサーはLL解析法に則っていま�
 
 開発中です！
 
-Grammar image:
-```
-var n1 = 2;
-var n2 = 3;
-show n1 * n2 + 1;
-```
+仕様ファイルの例:
 ```
 config skipSpacing true
 
@@ -35,6 +30,12 @@ expression expr {
         infix operator "-"
     }
 }
+```
+パーサーへの入力：
+```
+var n1 = 2;
+var n2 = 3;
+show n1 * n2 + 1;
 ```
 
 ## luna-parseって何？
