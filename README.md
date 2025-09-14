@@ -49,9 +49,9 @@ npm i
 npm run build
 ```
 
-2. Write spec file
+2. Write a spec file of your parser
 
-3. Generate your parser code
+3. Generate a code of your parser
 ```
 npm run generate
 ```
