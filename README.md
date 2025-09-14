@@ -14,7 +14,7 @@ config skipSpacing true
 
 rule root = topLevel+
 rule topLevel = declareVar | show
-rule declareVar = "var" name "=" expr ";"
+rule declareVar = "var" ident "=" expr ";"
 rule show = "show" expr ";"
 rule term = DIGIT+ | ident
 rule ident = ALPHA (ALPHA | DIGIT)*
