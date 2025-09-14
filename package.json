@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "generate": "node ./build/generate.js",
     "debug": "node ./build/debug.js"
   },
   "repository": {
