@@ -38,7 +38,7 @@ expression expr {
 luna-parseはBNFから派生した言語を用いて文法を記述します。\
 一般的に、従来のパーサージェネレータは生成されたパーサーを手動で変更しやすくは作られていません。そのため、パーサージェネレータを使わずにパーサーを手書きする方がメンテナンスがしやすくなっていました。\
 しかし、luna-parseは再帰下降パーサを生成するので、後から容易に修正できます。\
-luna-parseは式を効率的に解析できる式パーサも提供します。式パーサとしてはOperator-precedence parser (Precedence Climbing)に基づくパーサが生成されます。
+luna-parseは式を効率的に解析できる式パーサも提供します。式パーサとしてはOperator-precedence parser (Precedence Climbing method)に基づくパーサーが生成されます。
 
 ## License
 MIT

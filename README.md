@@ -56,7 +56,7 @@ npm run generate
 luna-parse uses languages derived from BNF to describe grammars.\
 With traditional parser generators are generally not designed to make it easy to manually modify the generated parsers. Consequently, hand-writing parsers without using a parser generator was often easier to maintain.\
 However, since luna-parse generates recursive descent parsers, they can be easily modified later.\
-luna-parse also provides an expression parser that can efficiently parse expressions. An expression parser based on Operator-precedence parser (Precedence Climbing) is generated.
+luna-parse also provides an expression parser that can efficiently parse expressions. An expression parser based on Operator-precedence parser (Precedence Climbing method) is generated.
 
 ## License
 MIT
