@@ -40,5 +40,23 @@ With traditional parser generators are generally not designed to make it easy to
 However, since lunaparse generates recursive descent parsers, they can be easily modified later.\
 lunaparse also provides an expression parser that can efficiently parse expressions. An expression parser based on Operator-precedence parser (Precedence Climbing) is generated.
 
+## Get started
+1. Install
+```
+git clone https://github.com/marihachi/lunaparse-js.git
+cd lunaparse-js
+npm i
+npm run build
+```
+
+2. Write spec file
+
+3. Generate your parser code
+```
+npm run generate
+```
+
+4. Enjoy your parser life!
+
 ## License
 MIT
