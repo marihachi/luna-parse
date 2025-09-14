@@ -5,11 +5,11 @@ import { Scan } from "./scan.js";
 export type ParseState = {
 };
 
-export function parse(source: string): Toplevel[] {
+export function parse(source: string): A_Toplevel[] {
     const s = new Scan(source);
     const state: ParseState = {};
 
-    const children: Toplevel[] = [];
+    const children: A_Toplevel[] = [];
     while (s.match({ word: "config" }) || s.match({ word: "rule" }) || s.match({ word: "expression" })) {
         children.push(parseToplevel(s, state));
     }
@@ -20,9 +20,9 @@ export function parse(source: string): Toplevel[] {
 }
 
 
-export type Toplevel = ConfigDecl | RuleDecl | ExpressionDecl;
+export type A_Toplevel = A_ConfigDecl | A_RuleDecl | A_ExpressionDecl;
 
-function parseToplevel(s: Scan, state: ParseState): Toplevel {
+function parseToplevel(s: Scan, state: ParseState): A_Toplevel {
     if (s.match({ word: "config" })) {
         return parseConfigDecl(s, state);
     } else if (s.match({ word: "rule" })) {
@@ -35,9 +35,9 @@ function parseToplevel(s: Scan, state: ParseState): Toplevel {
 }
 
 
-export type ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
+export type A_ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
 
-function parseConfigDecl(s: Scan, state: ParseState): ConfigDecl {
+function parseConfigDecl(s: Scan, state: ParseState): A_ConfigDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
@@ -52,9 +52,9 @@ function parseConfigDecl(s: Scan, state: ParseState): ConfigDecl {
 }
 
 
-export type RuleDecl = { kind: "RuleDecl"; name: string; children: string };
+export type A_RuleDecl = { kind: "RuleDecl"; name: string; children: string };
 
-function parseRuleDecl(s: Scan, state: ParseState): RuleDecl {
+function parseRuleDecl(s: Scan, state: ParseState): A_RuleDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
@@ -80,9 +80,9 @@ function parseRuleDecl(s: Scan, state: ParseState): RuleDecl {
 // TODO: rule alternate
 
 
-export type ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (OperatorLevel | ExprItem)[]; };
+export type A_ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (A_OperatorLevel | A_ExprItem)[]; };
 
-function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
+function parseExpressionDecl(s: Scan, state: ParseState): A_ExpressionDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
@@ -91,7 +91,7 @@ function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
-    const children: (OperatorLevel | ExprItem)[] = [];
+    const children: (A_OperatorLevel | A_ExprItem)[] = [];
     while (s.match({ word: "atom" }) || s.match({ word: "level" })) {
         children.push(parseExpressionDecl_0(s, state));
     }
@@ -101,7 +101,7 @@ function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
     return { kind: "ExpressionDecl", name, children };
 }
 
-function parseExpressionDecl_0(s: Scan, state: ParseState): OperatorLevel | ExprItem {
+function parseExpressionDecl_0(s: Scan, state: ParseState): A_OperatorLevel | A_ExprItem {
     if (s.match({ word: "atom" })) {
         return parseExprItem(s, state);
     } else if (s.match({ word: "level" })) {
@@ -112,9 +112,9 @@ function parseExpressionDecl_0(s: Scan, state: ParseState): OperatorLevel | Expr
 }
 
 
-export type ExprItem = { kind: "ExprItem"; name: string; };
+export type A_ExprItem = { kind: "ExprItem"; name: string; };
 
-function parseExprItem(s: Scan, state: ParseState): ExprItem {
+function parseExprItem(s: Scan, state: ParseState): A_ExprItem {
     s.forward();
 
     let name: string = parseIdent(s, state);
@@ -123,14 +123,14 @@ function parseExprItem(s: Scan, state: ParseState): ExprItem {
 }
 
 
-export type OperatorLevel = { kind: "OperatorLevel"; children: OperatorItem[]; };
+export type A_OperatorLevel = { kind: "OperatorLevel"; children: A_OperatorItem[]; };
 
-function parseOperatorLevel(s: Scan, state: ParseState): OperatorLevel {
+function parseOperatorLevel(s: Scan, state: ParseState): A_OperatorLevel {
     s.forward();
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
-    let children: OperatorItem[] = [];
+    let children: A_OperatorItem[] = [];
     while (s.match({ word: "prefix" }) || s.match({ word: "infix" }) || s.match({ word: "postfix" })) {
         children.push(parseOperatorItem(s, state));
     }
@@ -141,9 +141,9 @@ function parseOperatorLevel(s: Scan, state: ParseState): OperatorLevel {
 }
 
 
-export type OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
+export type A_OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
 
-function parseOperatorItem(s: Scan, state: ParseState): OperatorItem {
+function parseOperatorItem(s: Scan, state: ParseState): A_OperatorItem {
     const operatorKind = s.getValue();
     s.forward();
 
