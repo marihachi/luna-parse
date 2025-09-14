@@ -3,7 +3,7 @@ import { parse } from "./parse.js";
 import { lowering } from "./lowering.js";
 
 export function generateCode(specFile: string): string {
-    parse(specFile);
-    lowering();
-    return emit();
+    const hTree = parse(specFile);
+    const lTree = lowering(hTree);
+    return emit(lTree);
 }

@@ -9,7 +9,7 @@ export function parse(source: string): Toplevel[] {
     const s = new Scan(source);
     const state: ParseState = {};
 
-    let children: Toplevel[] = [];
+    const children: Toplevel[] = [];
     while (s.match({ word: "config" }) || s.match({ word: "rule" }) || s.match({ word: "expression" })) {
         children.push(parseToplevel(s, state));
     }
@@ -35,65 +35,70 @@ function parseToplevel(s: Scan, state: ParseState): Toplevel {
 }
 
 
-export type ConfigDecl = { kind: "ConfigDecl"; };
+export type ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
 
 function parseConfigDecl(s: Scan, state: ParseState): ConfigDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
-    const name = s.getValue();
+    const key = s.getValue();
     s.forward();
 
     s.expect({ kind: "Word" });
     const value = s.getValue();
     s.forward();
 
-    return { kind: "ConfigDecl" };
+    return { kind: "ConfigDecl", key, value };
 }
 
 
-export type RuleDecl = { kind: "RuleDecl"; left: string; right: Ident };
+export type RuleDecl = { kind: "RuleDecl"; name: string; children: string };
 
 function parseRuleDecl(s: Scan, state: ParseState): RuleDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
-    const left = s.getValue();
+    const name = s.getValue();
     s.forward();
 
     s.forwardWithExpect({ kind: "Equal" });
 
-    let right: Ident | undefined;
+    let children: string | undefined;
     if (s.match({ kind: "Word" })) {
-        right = parseIdent(s, state);
+        children = parseIdent(s, state);
     } else {
         s.throwSyntaxError("unexpected token");
     }
 
-    return { kind: "RuleDecl", left, right };
+    return { kind: "RuleDecl", name, children };
 }
 
 
-export type ExpressionDecl = { kind: "ExpressionDecl"; };
+// TODO: rule sequence
+
+
+// TODO: rule alternate
+
+
+export type ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (OperatorLevel | ExprItem)[]; };
 
 function parseExpressionDecl(s: Scan, state: ParseState): ExpressionDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
-    const left = s.getValue();
+    const name = s.getValue();
     s.forward();
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
-    if (s.match({ word: "atom" }) || s.match({ word: "level" })) {
-        let item: OperatorLevel | ExprItem = parseExpressionDecl_0(s, state);
-    } else {
-        s.throwSyntaxError("unexpected token");
+    const children: (OperatorLevel | ExprItem)[] = [];
+    while (s.match({ word: "atom" }) || s.match({ word: "level" })) {
+        children.push(parseExpressionDecl_0(s, state));
     }
 
     s.forwardWithExpect({ kind: "CloseBracket" });
 
-    return { kind: "ExpressionDecl" };
+    return { kind: "ExpressionDecl", name, children };
 }
 
 function parseExpressionDecl_0(s: Scan, state: ParseState): OperatorLevel | ExprItem {
@@ -107,20 +112,18 @@ function parseExpressionDecl_0(s: Scan, state: ParseState): OperatorLevel | Expr
 }
 
 
-export type ExprItem = { kind: "ExprItem"; };
+export type ExprItem = { kind: "ExprItem"; name: string; };
 
 function parseExprItem(s: Scan, state: ParseState): ExprItem {
     s.forward();
 
-    if (s.match({ kind: "Word" })) {
-        parseIdent(s, state);
-    }
+    let name: string = parseIdent(s, state);
 
-    return { kind: "ExprItem" };
+    return { kind: "ExprItem", name };
 }
 
 
-export type OperatorLevel = { kind: "OperatorLevel"; };
+export type OperatorLevel = { kind: "OperatorLevel"; children: OperatorItem[]; };
 
 function parseOperatorLevel(s: Scan, state: ParseState): OperatorLevel {
     s.forward();
@@ -134,31 +137,31 @@ function parseOperatorLevel(s: Scan, state: ParseState): OperatorLevel {
 
     s.forwardWithExpect({ kind: "CloseBracket" });
 
-    return { kind: "OperatorLevel" };
+    return { kind: "OperatorLevel", children };
 }
 
 
-export type OperatorItem = { kind: "OperatorItem"; };
+export type OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
 
 function parseOperatorItem(s: Scan, state: ParseState): OperatorItem {
-    const opKind = s.getValue();
+    const operatorKind = s.getValue();
     s.forward();
 
     s.forwardWithExpect({ word: "operator" });
 
     s.expect({ kind: "String" });
+    let value = s.getValue();
+    s.forward();
 
-    return { kind: "OperatorItem" };
+    return { kind: "OperatorItem", operatorKind, value };
 }
 
 
-export type Ident = { kind: "Ident"; name: string; };
-
-function parseIdent(s: Scan, state: ParseState): Ident {
+function parseIdent(s: Scan, state: ParseState): string {
     const name = s.getValue();
     s.forward();
 
-    return { kind: "Ident", name };
+    return name;
 }
 
 

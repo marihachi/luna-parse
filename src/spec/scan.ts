@@ -173,11 +173,11 @@ export class Scan {
             } else if (char === "}") {
                 input.nextChar();
                 return TOKEN("CloseBracket");
-            } else if (/^[a-z0-9]$/.test(char)) {
+            } else if (/^[a-z0-9]$/i.test(char)) {
                 let buf = "";
                 buf += char;
                 input.nextChar();
-                while (!input.eof() && /^[a-z0-9]$/.test(input.getChar())) {
+                while (!input.eof() && /^[a-z0-9]$/i.test(input.getChar())) {
                     buf += input.getChar();
                     input.nextChar();
                 }

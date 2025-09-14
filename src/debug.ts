@@ -11,4 +11,4 @@ try {
     throw new Error('Failed to load a spec file.');
 }
 
-console.log(parse(fileContent));
+console.log(JSON.stringify(parse(fileContent), null, "  "));
