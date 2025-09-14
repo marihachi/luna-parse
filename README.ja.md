@@ -1,5 +1,5 @@
-# lunaparse
-[English](https://github.com/marihachi/lunaparse-js/blob/main/README.md) | [日本語](https://github.com/marihachi/lunaparse-js/blob/main/README.ja.md)
+# luna-parse
+[English](https://github.com/marihachi/luna-parse/blob/main/README.md) | [日本語](https://github.com/marihachi/luna-parse/blob/main/README.ja.md)
 
 手動で変更しやすいLL(k)の予言的パーサーを生成します。
 
@@ -34,11 +34,11 @@ expression expr {
 }
 ```
 
-## lunaparseって何？
-lunaparseはBNFから派生した言語を用いて文法を記述します。\
+## luna-parseって何？
+luna-parseはBNFから派生した言語を用いて文法を記述します。\
 一般的に、従来のパーサージェネレータは生成されたパーサーを手動で変更しやすくは作られていません。そのため、パーサージェネレータを使わずにパーサーを手書きする方がメンテナンスがしやすくなっていました。\
-しかし、lunaparseは再帰下降パーサを生成するので、後から容易に修正できます。\
-lunaparseは式を効率的に解析できる式パーサも提供します。式パーサとしてはOperator-precedence parser (Precedence Climbing)に基づくパーサが生成されます。
+しかし、luna-parseは再帰下降パーサを生成するので、後から容易に修正できます。\
+luna-parseは式を効率的に解析できる式パーサも提供します。式パーサとしてはOperator-precedence parser (Precedence Climbing)に基づくパーサが生成されます。
 
 ## License
 MIT
