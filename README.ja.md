@@ -1,9 +1,12 @@
 # luna-parse
 [English](https://github.com/marihachi/luna-parse/blob/main/README.md) | [日本語](https://github.com/marihachi/luna-parse/blob/main/README.ja.md)
 
-手動で変更しやすいLL(k)の予言的パーサーを生成します。
+再帰下降パーサーと字句解析器のコードジェネレーター。
 
-開発中！
+luna-parseにより生成されたパーサーはLL解析法に則っています。\
+入力文法は文脈自由文法(CFG)でなければなりません。
+
+開発中です！
 
 Grammar image:
 ```
