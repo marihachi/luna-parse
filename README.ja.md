@@ -1,7 +1,8 @@
 # luna-parse
 [English](https://github.com/marihachi/luna-parse/blob/main/README.md) | [日本語](https://github.com/marihachi/luna-parse/blob/main/README.ja.md)
 
-再帰下降パーサーと字句解析器のコードジェネレーター。
+再帰下降パーサーと字句解析器のコードジェネレーター。\
+仕様ファイルを記述することでコードを生成します。
 
 luna-parseにより生成されたパーサーはLL解析法に則っています。\
 入力文法は文脈自由文法(CFG)でなければなりません。
