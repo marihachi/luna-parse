@@ -34,12 +34,6 @@ expression expr {
 }
 ```
 
-## What is lunaparse?
-lunaparse uses languages derived from BNF to describe grammars.\
-With traditional parser generators are generally not designed to make it easy to manually modify the generated parsers. Consequently, hand-writing parsers without using a parser generator was often easier to maintain.\
-However, since lunaparse generates recursive descent parsers, they can be easily modified later.\
-lunaparse also provides an expression parser that can efficiently parse expressions. An expression parser based on Operator-precedence parser (Precedence Climbing) is generated.
-
 ## Get started
 1. Install
 ```
@@ -57,6 +51,12 @@ npm run generate
 ```
 
 4. Enjoy your parser life!
+
+## Why use lunaparse?
+lunaparse uses languages derived from BNF to describe grammars.\
+With traditional parser generators are generally not designed to make it easy to manually modify the generated parsers. Consequently, hand-writing parsers without using a parser generator was often easier to maintain.\
+However, since lunaparse generates recursive descent parsers, they can be easily modified later.\
+lunaparse also provides an expression parser that can efficiently parse expressions. An expression parser based on Operator-precedence parser (Precedence Climbing) is generated.
 
 ## License
 MIT
