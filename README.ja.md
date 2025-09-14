@@ -1,5 +1,5 @@
 # lunaparse.js
-[Engligh](https://github.com/marihachi/lunaparse-js/blob/main/README.md) | [日本語](https://github.com/marihachi/lunaparse-js/blob/main/README.ja.md)
+[English](https://github.com/marihachi/lunaparse-js/blob/main/README.md) | [日本語](https://github.com/marihachi/lunaparse-js/blob/main/README.ja.md)
 
 手動で変更しやすいLL(k)の予言的パーサーを生成します。
 

@@ -1,5 +1,5 @@
 # lunaparse.js
-[Engligh](https://github.com/marihachi/lunaparse-js/blob/main/README.md) | [日本語](https://github.com/marihachi/lunaparse-js/blob/main/README.ja.md)
+[English](https://github.com/marihachi/lunaparse-js/blob/main/README.md) | [日本語](https://github.com/marihachi/lunaparse-js/blob/main/README.ja.md)
 
 Generates a LL(k) predictive parser that can be easily modified manually.\
 
