@@ -170,7 +170,6 @@ function parseIdent(s: Scan, state: ParseState): string {
     return name;
 }
 
-// pratt parser
 function parseExpr(s: Scan, state: ParseState): A_Expr {
     return parseExprBp(s, state, 0);
 }
@@ -184,9 +183,14 @@ const operators: AnyOperator[] = [
     // TODO
 ];
 
+// pratt parsing
+// https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
+// bp値は演算子が左側と右側に対してどの程度強く結合するかを表します。
+// 例えば、InfixOperatorではlbpを大きくすると右結合、rbpを大きくすると左結合の演算子になります。
+// 詳細はpratt parsingの説明ページを参照してください。
+
 function parseExprBp(s: Scan, state: ParseState, minBp: number): A_Expr {
-    // pratt parsing
-    // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
     let expr: A_Expr;
     const tokenKind = s.getToken().kind;
     const prefix = operators.find((x): x is PrefixOperator => x.kind === "PrefixOperator" && x.tokenKind === tokenKind);
