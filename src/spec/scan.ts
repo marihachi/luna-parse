@@ -67,6 +67,7 @@ export class Scan {
         this.tokens.length = 0;
     }
 
+    /** 現在のトークンを取得します。 */
     getToken(offset: number = 0): Token {
         // 指定位置のトークンまで読まれてなければ読み取る
         while (this.tokens.length <= offset) {
@@ -79,6 +80,7 @@ export class Scan {
         return resultToken;
     }
 
+    /** 現在のトークンに関連している値を取得します。 */
     getValue(offset: number = 0): string {
         const token = this.getToken(offset);
         if (token.value == null) {
@@ -87,7 +89,7 @@ export class Scan {
         return token.value;
     }
 
-    /** 現在のトークンが指定した条件のトークンであるかを返す */
+    /** 現在のトークンが指定した条件を満たしているかどうかを返します。 */
     match(token: TokenSpecifier, offset: number = 0): boolean {
         const current = this.getToken(offset);
         if (token.kind != null) {
@@ -99,7 +101,7 @@ export class Scan {
         }
     }
 
-    /** 次に進む */
+    /** 次のトークンに進みます。 */
     forward(): void {
         // 現在のトークンが既に読まれていれば、現在のトークンを破棄
         if (this.tokens.length > 0) {
@@ -107,13 +109,19 @@ export class Scan {
         }
     }
 
-    /** 期待した条件のトークンであるかを確認して次に進む */
+    /**
+     * 現在のトークンが指定した条件を満たしていることを確認し、条件を満たしていれば次のトークンに進みます。
+     * 条件を満たしていなければSyntaxErrorを生成します。
+    */
     forwardWithExpect(token: TokenSpecifier): void {
         this.expect(token);
         this.forward();
     }
 
-    /** 期待したトークンであるかを確認する */
+    /**
+     * 現在のトークンが指定した条件を満たしていることを確認します。
+     * 条件を満たしていなければSyntaxErrorを生成します。
+    */
     expect(token: TokenSpecifier, offset: number = 0): void {
         if (!this.match(token, offset)) {
             const current: TokenSpecifier = { token: this.getToken(offset) };
@@ -121,6 +129,7 @@ export class Scan {
         }
     }
 
+    /** SyntaxErrorを生成します。 */
     throwSyntaxError(message: string): never {
         throw new Error(`${message} (${this.input.line}:${this.input.column})`);
     }
