@@ -1,6 +1,6 @@
 // 構文解析 Scanから取得したトークン列をASTに変換する
 
-import { Scan } from "./scan.js";
+import { Scan, TokenKind } from "./scan.js";
 
 export type ParseState = {
 };
@@ -74,12 +74,6 @@ function parseRuleDecl(s: Scan, state: ParseState): A_RuleDecl {
 }
 
 
-// TODO: rule sequence
-
-
-// TODO: rule alternate
-
-
 export type A_ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (A_OperatorLevel | A_ExprItem)[]; };
 
 function parseExpressionDecl(s: Scan, state: ParseState): A_ExpressionDecl {
@@ -117,7 +111,12 @@ export type A_ExprItem = { kind: "ExprItem"; name: string; };
 function parseExprItem(s: Scan, state: ParseState): A_ExprItem {
     s.forward();
 
-    let name: string = parseIdent(s, state);
+    let name: string;
+    if (s.match({ kind: "Word" })) {
+        name = parseIdent(s, state);
+    } else {
+        s.throwSyntaxError("unexpected token");
+    }
 
     return { kind: "ExprItem", name };
 }
@@ -156,6 +155,13 @@ function parseOperatorItem(s: Scan, state: ParseState): A_OperatorItem {
     return { kind: "OperatorItem", operatorKind, value };
 }
 
+export type A_Expr = A_Sequence | A_Alternate;
+
+export type A_Sequence = {};
+// TODO
+
+export type A_Alternate = {};
+// TODO
 
 function parseIdent(s: Scan, state: ParseState): string {
     const name = s.getValue();
@@ -164,5 +170,66 @@ function parseIdent(s: Scan, state: ParseState): string {
     return name;
 }
 
+// pratt parser
+function parseExpr(s: Scan, state: ParseState): A_Expr {
+    return parseExprBp(s, state, 0);
+}
 
-// TODO: Operator-precedence parser
+type PrefixOperator = { kind: "PrefixOperator", tokenKind: TokenKind, bp: number };
+type InfixOperator = { kind: "InfixOperator", tokenKind: TokenKind, lbp: number, rbp: number };
+type PostfixOperator = { kind: "PostfixOperator", tokenKind: TokenKind, bp: number };
+type AnyOperator = PrefixOperator | InfixOperator | PostfixOperator;
+
+const operators: AnyOperator[] = [
+    // TODO
+];
+
+function parseExprBp(s: Scan, state: ParseState, minBp: number): A_Expr {
+    // pratt parsing
+    // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+    let expr: A_Expr;
+    const tokenKind = s.getToken().kind;
+    const prefix = operators.find((x): x is PrefixOperator => x.kind === "PrefixOperator" && x.tokenKind === tokenKind);
+    if (prefix != null) {
+        expr = handlePrefixOperator(s, state, prefix.bp);
+    } else {
+        expr = handleAtom(s, state);
+    }
+    while (true) {
+        const tokenKind = s.getToken().kind;
+        const postfix = operators.find((x): x is PostfixOperator => x.kind === "PostfixOperator" && x.tokenKind === tokenKind);
+        if (postfix != null) {
+            if (postfix.bp < minBp) {
+                break;
+            }
+            expr = handlePostfixOperator(s, state, expr);
+            continue;
+        }
+        const infix = operators.find((x): x is InfixOperator => x.kind === "InfixOperator" && x.tokenKind === tokenKind);
+        if (infix != null) {
+            if (infix.lbp < minBp) {
+                break;
+            }
+            expr = handleInfixOperator(s, state, expr, infix.rbp);
+            continue;
+        }
+        break;
+    }
+    return expr;
+}
+
+function handlePrefixOperator(s: Scan, state: ParseState, minBp: number): A_Expr {
+    s.throwSyntaxError("not implemented");
+}
+
+function handleInfixOperator(s: Scan, state: ParseState, left: A_Expr, minBp: number): A_Expr {
+    s.throwSyntaxError("not implemented");
+}
+
+function handlePostfixOperator(s: Scan, state: ParseState, expr: A_Expr): A_Expr {
+    s.throwSyntaxError("not implemented");
+}
+
+function handleAtom(s: Scan, state: ParseState): A_Expr {
+    s.throwSyntaxError("not implemented");
+}
