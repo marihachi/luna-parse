@@ -1,4 +1,4 @@
-// ASTからIR Treeを生成する
+// 意味解析 ASTをIR Treeに変換する
 
 import { A_Toplevel } from "./parse.js";
 

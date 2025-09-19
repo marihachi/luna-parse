@@ -1,4 +1,4 @@
-// 構文解析 Scanから取得したトークン列をASTに変換する
+// 構文解析 トークン列をASTに変換する
 
 import { Scan, TokenKind } from "./scan.js";
 
