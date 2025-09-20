@@ -14,7 +14,7 @@ luna-parseが生成するパーサーは、必要に応じて手作業で変更�
 
 仕様ファイルの例:
 ```
-parser {
+parser ExampleParser {
     root = topLevel (LF? topLevel)* ;
     topLevel = declareVar / show ;
     declareVar = VAR LF? IDENT LF? EQUAL LF? expr LF? SEMI ;
@@ -22,7 +22,8 @@ parser {
     term = NUMBER / IDENT ;
 }
 
-expression expr {
+expression ExampleExpression {
+    rule expr ;
     atom term ;
     operator group {
         infix operator ASTA ;
@@ -34,7 +35,7 @@ expression expr {
     }
 }
 
-lexer {
+lexer ExampleLexer {
     [ignored] SPACE = " " ;
     LF = "\r\n" / "\n" ;
     ASTA = "*" ;

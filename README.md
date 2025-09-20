@@ -14,7 +14,7 @@ I am currently developing it!
 
 An example of spec file:
 ```
-parser {
+parser ExampleParser {
     root = topLevel (LF? topLevel)* ;
     topLevel = declareVar / show ;
     declareVar = VAR LF? IDENT LF? EQUAL LF? expr LF? SEMI ;
@@ -22,7 +22,8 @@ parser {
     term = NUMBER / IDENT ;
 }
 
-expression expr {
+expression ExampleExpression {
+    rule expr ;
     atom term ;
     operator group {
         infix operator ASTA ;
@@ -34,7 +35,7 @@ expression expr {
     }
 }
 
-lexer {
+lexer ExampleLexer {
     [ignored] SPACE = " " ;
     LF = "\r\n" / "\n" ;
     ASTA = "*" ;
