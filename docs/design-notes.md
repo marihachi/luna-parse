@@ -1,33 +1,45 @@
 ## lunaparseの文法
 ```
-config skipSpacing false
+parser Parser {
+    root = _ toplevels? _;
+    toplevels = toplevel (_ toplevel)*
+    toplevel = parserBlock / lexerBlock / exprBlock;
+    parserBlock = PARSER _ OPEN_BRACKET _ CLOSE_BRACKET;
+    ruleStatement = IDENT _ EQ _ expr;
+    lexerBlock = LEXER _ OPEN_BRACKET _ CLOSE_BRACKET;
+    exprBlock = EXPRESSION _ IDENT _ OPEN_BRACKET _ exprGroups? _ CLOSE_BRACKET;
+    exprGroups = exprGroup (_ exprGroup)*
+    exprGroup = OPERATOR GROUP _ OPEN_BRACKET _ exprOperators? _ CLOSE_BRACKET;
+    exprOperators = exprOperator (_ exprOperator)*
+    exprOperator = (PREFIX | INFIX | POSTFIX) _ OPERATOR IDENT;
+    item = IDENT | DOT | OPEN_PAREN expr CLOSE_PAREN;
+    _ = (WSP / LF)*
+}
 
-rule root = toplevel (_* toplevel)*
-rule toplevel = config | ruleStatement | exprBlock
-rule config = "config" ident ident
-rule ruleStatement = "rule" ident _* "=" _* expr
-rule exprBlock = "expression" _* ident " _* "{" _* exprLevel (_* exprLevel)* _* "}"
-rule exprLevel = "level" _* "{" _* exprOperator (_* exprOperator)* _* "}"
-rule exprOperator = ("prefix" | "infix" | "postfix") _* "operator" ident
-rule item = ident | "." | "(" expr ")"
-rule ident = ALPHA (ALPHA | NUMBER)*
-rule str = "\"" (!"\"" .)+ "\""
-rule _ = " " | "\t" | "\r\n" | "\r" | "\n"
-
-expression expr {
-    atom item
-    level {
-        prefix operator "!"
-    }
-    level {
-        postfix operator "*"
-        postfix operator "+"
-        postfix operator "?"
-    }
-    level {
-        infix operator "|"
-        infix operator " "
-    }
+lexer Lexer {
+    WSP = " " / "\t";
+    LF = "\r\n" / "\n";
+    ASTA = "*";
+    PLUS = "+";
+    EXCL = "!";
+    QUES = "?";
+    SLASH = "/";
+    DOT = ".";
+    EQ = "=";
+    OPEN_BRACKET = "{";
+    CLOSE_BRACKET = "}";
+    OPEN_PAREN = "(";
+    CLOSE_PAREN = ")";
+    PARSER = "parser";
+    LEXER = "lexer";
+    EXPRESSION = "expression";
+    PREFIX = "prefix";
+    INFIX = "infix";
+    POSTFIX = "postfix";
+    OPERATOR = "operator";
+    GROUP = "group";
+    STR = "\"" (!"\"" .)+ "\"";
+    IDENT = [a-zA-Z_] ([a-zA-Z_] / [0-9])*;
 }
 ```
 

@@ -37,7 +37,7 @@ expression ExampleExpression {
 
 lexer ExampleLexer {
     [ignored] SPACE = " " ;
-    LF = "\r\n" / "\n" ;
+    [ignored] LF = "\r\n" / "\n" ;
     ASTA = "*" ;
     SLASH = "/" ;
     PLUS = "+" ;
