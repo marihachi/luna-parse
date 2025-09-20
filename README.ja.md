@@ -4,7 +4,7 @@
 luna-parseはパーサージェネレーターです。\
 仕様ファイルを記述することでコードを生成します。
 
-luna-parseはPEG(Parsing Expression Grammar)の思想から影響を受けています。
+luna-parseはPEG(Parsing Expression Grammar)の思想から影響を受けています。\
 しかし、バックトラックを行わない点はPEGとは異なります。
 
 luna-parseが生成するパーサーは、必要に応じて手作業で変更可能であるように設計されています。\
