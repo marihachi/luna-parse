@@ -14,25 +14,39 @@ I am currently developing it!
 
 An example of spec file:
 ```
-config skipSpacing true
-
-root = topLevel+ ;
-topLevel = declareVar / show ;
-declareVar = "var" ident "=" expr ";" ;
-show = "show" expr ";" ;
-term = DIGIT+ / ident ;
-ident = ALPHA (ALPHA / DIGIT)* ;
+parser {
+    root = topLevel (LF? topLevel)* ;
+    topLevel = declareVar / show ;
+    declareVar = VAR LF? IDENT LF? EQUAL LF? expr LF? SEMI ;
+    show = SHOW LF? expr LF? SEMI ;
+    term = NUMBER / IDENT ;
+}
 
 expression expr {
-    atom term
+    atom term ;
     operator group {
-        infix operator "*"
-        infix operator "/"
+        infix operator ASTA ;
+        infix operator SLASH ;
     }
     operator group {
-        infix operator "+"
-        infix operator "-"
+        infix operator PLUS ;
+        infix operator MINUS ;
     }
+}
+
+lexer {
+    [ignored] SPACE = " " ;
+    LF = "\r\n" / "\n" ;
+    ASTA = "*" ;
+    SLASH = "/" ;
+    PLUS = "+" ;
+    MINUS = "-" ;
+    EQUAL = "=" ;
+    SEMI = ";" ;
+    SHOW = "show" ;
+    VAR = "var" ;
+    NUMBER = [1-9] [0-9]* ;
+    IDENT = [a-zA-Z] ([a-zA-Z] / [0-9])* ;
 }
 ```
 Parser input:
