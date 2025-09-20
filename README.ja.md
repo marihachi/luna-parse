@@ -1,16 +1,16 @@
 # luna-parse
 [English](https://github.com/marihachi/luna-parse/blob/main/README.md) | [日本語](https://github.com/marihachi/luna-parse/blob/main/README.ja.md)
 
-再帰下降パーサーと字句解析器のコードジェネレーター。\
+luna-parseはパーサージェネレーターです。\
 仕様ファイルを記述することでコードを生成します。
 
-luna-parseにより生成されるパーサーはLL解析法と呼ばれる方法に従います。\
-入力文法は文脈自由文法(CFG)でなければなりません。
+luna-parseはPEG(Parsing Expression Grammar)の思想から影響を受けています。
+しかし、バックトラックを行わない点はPEGとは異なります。
 
-luna-parseが生成するパーサーは手作業で修正できるようになっています。\
+luna-parseが生成するパーサーは、必要に応じて手作業で変更可能であるように設計されています。\
 これはパーサジェネレーターが現実のパーサーを完全に生成することは困難であるためです。
 
-開発中です！
+現在開発を進めています！
 
 仕様ファイルの例:
 ```
