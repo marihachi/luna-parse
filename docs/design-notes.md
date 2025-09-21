@@ -1,43 +1,25 @@
 ## lunaparseの文法
 ```
 parser Parser {
-    root = _ toplevels? _;
-    toplevels = toplevel (_ toplevel)*
-    toplevel = parserBlock / lexerBlock / exprBlock;
-    parserBlock = PARSER _ OPEN_BRACKET _ CLOSE_BRACKET;
-    ruleStatement = IDENT _ EQ _ expr;
-    lexerBlock = LEXER _ OPEN_BRACKET _ CLOSE_BRACKET;
-    exprBlock = EXPRESSION _ IDENT _ OPEN_BRACKET _ exprGroups? _ CLOSE_BRACKET;
-    exprGroups = exprGroup (_ exprGroup)*
-    exprGroup = OPERATOR GROUP _ OPEN_BRACKET _ exprOperators? _ CLOSE_BRACKET;
-    exprOperators = exprOperator (_ exprOperator)*
-    exprOperator = (PREFIX | INFIX | POSTFIX) _ OPERATOR IDENT;
-    item = IDENT | DOT | OPEN_PAREN expr CLOSE_PAREN;
-    _ = (WSP / LF)*
-}
-
-lexer Lexer {
+    root = _ toplevels _;
+    toplevels = toplevel? (_ toplevel)*;
+    toplevel = parserBlock / exprBlock;
+    parserBlock = "parser" _ IDENT _ "{" _ rules _ "}";
+    rules = rule? (_ rule)*;
+    rule = IDENT _ "=" _ expr1 _ ";";
+    expr1 = expr2 (_ "/" _ expr2)*;
+    expr2 = expr3 (_ expr3)*;
+    expr3 = expr4 _ ("*" / "+" / "?")?;
+    expr4 = ("&" / "!")? _ atom;
+    atom = "(" expr1 ")" / "." / STR / IDENT;
+    exprBlock = "expression" _ IDENT _ "{" _ operatorGroups _ "}";
+    operatorGroups = operatorGroup? (_ operatorGroup)*;
+    operatorGroup = "operator" "group" _ "{" _ operators _ "}";
+    operators = operator? (_ operator)*;
+    operator = ("prefix" / "infix" / "postfix") _ "operator" STR;
+    _ = (WSP / LF)*;
     WSP = " " / "\t";
     LF = "\r\n" / "\n";
-    ASTA = "*";
-    PLUS = "+";
-    EXCL = "!";
-    QUES = "?";
-    SLASH = "/";
-    DOT = ".";
-    EQ = "=";
-    OPEN_BRACKET = "{";
-    CLOSE_BRACKET = "}";
-    OPEN_PAREN = "(";
-    CLOSE_PAREN = ")";
-    PARSER = "parser";
-    LEXER = "lexer";
-    EXPRESSION = "expression";
-    PREFIX = "prefix";
-    INFIX = "infix";
-    POSTFIX = "postfix";
-    OPERATOR = "operator";
-    GROUP = "group";
     STR = "\"" (!"\"" .)+ "\"";
     IDENT = [a-zA-Z_] ([a-zA-Z_] / [0-9])*;
 }
