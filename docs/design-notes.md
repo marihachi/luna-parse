@@ -11,7 +11,7 @@ parser Parser {
     expr2 = expr3 (_ expr3)*;
     expr3 = expr4 _ ("*" / "+" / "?")?;
     expr4 = ("&" / "!")? _ atom;
-    atom = "(" expr1 ")" / "." / STR / IDENT;
+    atom = "(" expr1 ")" / "." / STR / CharMatch / IDENT;
     exprBlock = "expression" _ IDENT _ "{" _ operatorGroups _ "}";
     operatorGroups = operatorGroup? (_ operatorGroup)*;
     operatorGroup = "operator" "group" _ "{" _ operators _ "}";
@@ -20,7 +20,16 @@ parser Parser {
     _ = (WSP / LF)*;
     WSP = " " / "\t";
     LF = "\r\n" / "\n";
-    STR = "\"" (!"\"" .)+ "\"";
+    STR = "\"" StrChar* "\"";
+    StrChar
+        = EscapeSeq
+        / !"\"" .;
+    CharMatch = "[" (CharRange / Char)* "]";
+    CharRange = Char "-" Char;
+    Char
+        = EscapeSeq
+        / !"]" .;
+    EscapeSeq = "\\" ("\\" / "\"" / "n" / "r" / "t");
     IDENT = [a-zA-Z_] ([a-zA-Z_] / [0-9])*;
 }
 ```
