@@ -45,10 +45,12 @@ lexer Lexer {
 
 例
 ```
-rule parent = sub*
-rule sub = sub1 | sub2
-rule sub1 = "sub1"
-rule sub2 = "sub2"
+parser Parser {
+    parent = sub*;
+    sub = sub1 / sub2;
+    sub1 = "sub1";
+    sub2 = "sub2";
+}
 ```
 ```ts
 function parseParent(s: Scan): void {
