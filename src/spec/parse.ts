@@ -34,7 +34,7 @@ function parseToplevel(p: ParseContext): A_Toplevel {
 export type A_ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
 
 function parseConfigDecl(p: ParseContext): A_ConfigDecl {
-    p.forward("config");
+    p.acceptMatch();
 
     const key = parseIdent(p);
 
@@ -47,7 +47,7 @@ function parseConfigDecl(p: ParseContext): A_ConfigDecl {
 export type A_RuleDecl = { kind: "RuleDecl"; name: string; children: string };
 
 function parseRuleDecl(p: ParseContext): A_RuleDecl {
-    p.forward("rule");
+    p.acceptMatch();
 
     const name = parseIdent(p);
 
@@ -67,7 +67,7 @@ function parseRuleDecl(p: ParseContext): A_RuleDecl {
 export type A_ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (A_OperatorLevel | A_ExprItem)[]; };
 
 function parseExpressionDecl(p: ParseContext): A_ExpressionDecl {
-    p.forward("expression");
+    p.acceptMatch();
 
     const name = parseIdent(p);
 
@@ -97,7 +97,7 @@ function parseExpressionDecl_0(p: ParseContext): A_OperatorLevel | A_ExprItem {
 export type A_ExprItem = { kind: "ExprItem"; name: string; };
 
 function parseExprItem(p: ParseContext): A_ExprItem {
-    p.forward("atom");
+    p.acceptMatch();
 
     let name: string = parseIdent(p);
 
@@ -108,7 +108,7 @@ function parseExprItem(p: ParseContext): A_ExprItem {
 export type A_OperatorLevel = { kind: "OperatorLevel"; children: A_OperatorItem[]; };
 
 function parseOperatorLevel(p: ParseContext): A_OperatorLevel {
-    p.forward("level");
+    p.acceptMatch();
 
     p.forwardWithExpect("{");
 
@@ -126,19 +126,7 @@ function parseOperatorLevel(p: ParseContext): A_OperatorLevel {
 export type A_OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
 
 function parseOperatorItem(p: ParseContext): A_OperatorItem {
-    let operatorKind: string;
-    if (p.match("prefix")) {
-        p.forward("prefix");
-        operatorKind = "prefix";
-    } else if (p.match("infix")) {
-        p.forward("infix");
-        operatorKind = "infix";
-    } else if (p.match("postfix")) {
-        p.forward("postfix");
-        operatorKind = "postfix";
-    } else {
-        p.throwSyntaxError("unexpected token");
-    }
+    const operatorKind: string = p.acceptMatch() as string;
 
     p.forwardWithExpect("operator");
 

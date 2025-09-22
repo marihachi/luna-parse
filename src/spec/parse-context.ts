@@ -56,7 +56,7 @@ export class Input {
 
 export type MatchSpecifier = string | ParseFunction;
 export type ForwardSpecifier = string | number;
-export type ParseFunction = (p: ParseContext) => void;
+export type ParseFunction = (p: ParseContext) => unknown;
 
 export class ParseError extends Error {
     constructor(message?: string) {
@@ -66,6 +66,7 @@ export class ParseError extends Error {
 
 export class ParseContext {
     input: Input;
+    lastMatch: { index: number; result: unknown; } | undefined;
 
     constructor(source: string) {
         this.input = new Input(source);
@@ -89,9 +90,10 @@ export class ParseContext {
         if (typeof specifier === "string") {
             return this.input.getChar(specifier.length) === specifier;
         } else {
-            const storedIndex = this.input.index;
+            const beginIndex = this.input.index;
             try {
-                specifier(this);
+                const result = specifier(this);
+                this.lastMatch = { index: this.input.index, result: result };
                 return true;
             } catch (e) {
                 if (e instanceof ParseError) {
@@ -99,9 +101,18 @@ export class ParseContext {
                 }
                 throw e;
             } finally {
-                this.input.index = storedIndex;
+                this.input.index = beginIndex;
             }
         }
+    }
+
+    /** 直前にマッチした内容を受け入れて、現在位置を進めます。 */
+    acceptMatch(): unknown {
+        if (this.lastMatch == null) {
+            throw new Error("not matched yet");
+        }
+        this.input.index = this.lastMatch.index;
+        return this.lastMatch.result;
     }
 
     /** 現在位置を次の位置に進めます。 */
