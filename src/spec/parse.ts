@@ -163,7 +163,7 @@ function parseIdent(p: ParseContext): string {
 
 function parse_(p: ParseContext): string {
     const beginIndex = p.input.index;
-    while (!p.eof() && (p.match(" ") || p.match("\t") || p.match("\r\n") || p.match("\n"))) {
+    while (p.match(" ") || p.match("\t") || p.match("\r\n") || p.match("\n")) {
         if (p.match(" ")) {
             p.forward(1);
         } else if (p.match("\t")) {

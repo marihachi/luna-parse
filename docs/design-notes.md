@@ -32,40 +32,42 @@ parser Parser {
 }
 ```
 
-例
+## 使用イメージ
 ```
 parser Parser {
     parent = sub*;
     sub = sub1 / sub2;
-    sub1 = "sub1";
-    sub2 = "sub2";
+    sub1 = "sub1" "continued1";
+    sub2 = "sub2" "continued2";
 }
 ```
 ```ts
-function parseParent(s: Scan): void {
+function parseParent(p: ParseContext): void {
     let children: Sub[] = [];
-    while (s.match({ word: "sub1" }) || s.match({ word: "sub2" })) {
-        children.push(parseSub(s));
+    while (!p.eof() && (p.match("sub1") || p.match("sub2"))) {
+        children.push(parseSub(p));
     }
 }
 type Sub = Sub1 | Sub2;
-function parseSub(s: Scan): Sub {
-    if (s.match({ word: "sub1" })) {
-        return parseSub1(s);
-    } else if (s.match({ word: "sub2" })) {
-        return parseSub2(s);
+function parseSub(p: ParseContext): Sub {
+    if (p.match("sub1")) {
+        return parseSub1(p);
+    } else if (p.match("sub2")) {
+        return parseSub2(p);
     } else {
-        s.throwSyntaxError("unexpected token");
+        p.throwSyntaxError("unexpected token");
     }
 }
 type Sub1 = { kind: "sub1" };
-function parseSub1(s: Scan): Sub1 {
-    s.forward();
+function parseSub1(p: ParseContext): Sub1 {
+    p.acceptMatch();
+    p.forwardWithExpect("continued1");
     return { kind: "sub1" };
 }
 type Sub2 = { kind: "sub2" };
-function parseSub2(s: Scan): Sub2 {
-    s.forward();
+function parseSub2(p: ParseContext): Sub2 {
+    p.acceptMatch();
+    p.forwardWithExpect("continued2");
     return { kind: "sub2" };
 }
 ```

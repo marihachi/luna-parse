@@ -25,9 +25,6 @@ export class Input {
     }
 
     getChar(length: number = 1): string {
-        if (this.eof()) {
-            throw new Error("End of stream");
-        }
         return this.source.slice(this.index, this.index + length);
     }
 
