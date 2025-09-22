@@ -2,16 +2,12 @@
 
 import { ParseContext } from "./parse-context.js";
 
-export type ParseState = {
-};
-
 export function parse(source: string): A_Toplevel[] {
     const p = new ParseContext(source);
-    const state: ParseState = {};
 
     const children: A_Toplevel[] = [];
     while (p.match("config") || p.match("rule") || p.match("expression")) {
-        children.push(parseToplevel(p, state));
+        children.push(parseToplevel(p));
     }
 
     p.expectEOF();
@@ -22,13 +18,13 @@ export function parse(source: string): A_Toplevel[] {
 
 export type A_Toplevel = A_ConfigDecl | A_RuleDecl | A_ExpressionDecl;
 
-function parseToplevel(p: ParseContext, state: ParseState): A_Toplevel {
+function parseToplevel(p: ParseContext): A_Toplevel {
     if (p.match("config")) {
-        return parseConfigDecl(p, state);
+        return parseConfigDecl(p);
     } else if (p.match("rule")) {
-        return parseRuleDecl(p, state);
+        return parseRuleDecl(p);
     } else if (p.match("expression")) {
-        return parseExpressionDecl(p, state);
+        return parseExpressionDecl(p);
     } else {
         p.throwSyntaxError("unexpected token");
     }
@@ -37,16 +33,12 @@ function parseToplevel(p: ParseContext, state: ParseState): A_Toplevel {
 
 export type A_ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
 
-function parseConfigDecl(p: ParseContext, state: ParseState): A_ConfigDecl {
+function parseConfigDecl(p: ParseContext): A_ConfigDecl {
     p.forward("config");
 
-    p.expect({ kind: "Word" });
-    const key = p.getValue();
-    p.forward();
+    const key = parseIdent(p);
 
-    p.expect({ kind: "Word" });
-    const value = p.getValue();
-    p.forward();
+    const value = parseIdent(p);
 
     return { kind: "ConfigDecl", key, value };
 }
@@ -54,18 +46,16 @@ function parseConfigDecl(p: ParseContext, state: ParseState): A_ConfigDecl {
 
 export type A_RuleDecl = { kind: "RuleDecl"; name: string; children: string };
 
-function parseRuleDecl(p: ParseContext, state: ParseState): A_RuleDecl {
+function parseRuleDecl(p: ParseContext): A_RuleDecl {
     p.forward("rule");
 
-    p.expect({ kind: "Word" });
-    const name = p.getValue();
-    p.forward();
+    const name = parseIdent(p);
 
     p.forwardWithExpect("=");
 
     let children: string | undefined;
-    if (p.match({ kind: "Word" })) {
-        children = parseIdent(p, state);
+    if (p.match(parseIdent)) {
+        children = parseIdent(p);
     } else {
         p.throwSyntaxError("unexpected token");
     }
@@ -76,18 +66,16 @@ function parseRuleDecl(p: ParseContext, state: ParseState): A_RuleDecl {
 
 export type A_ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (A_OperatorLevel | A_ExprItem)[]; };
 
-function parseExpressionDecl(p: ParseContext, state: ParseState): A_ExpressionDecl {
+function parseExpressionDecl(p: ParseContext): A_ExpressionDecl {
     p.forward("expression");
 
-    p.expect({ kind: "Word" });
-    const name = p.getValue();
-    p.forward();
+    const name = parseIdent(p);
 
     p.forwardWithExpect("{");
 
     const children: (A_OperatorLevel | A_ExprItem)[] = [];
     while (p.match("atom") || p.match("level")) {
-        children.push(parseExpressionDecl_0(p, state));
+        children.push(parseExpressionDecl_0(p));
     }
 
     p.forwardWithExpect("}");
@@ -95,11 +83,11 @@ function parseExpressionDecl(p: ParseContext, state: ParseState): A_ExpressionDe
     return { kind: "ExpressionDecl", name, children };
 }
 
-function parseExpressionDecl_0(p: ParseContext, state: ParseState): A_OperatorLevel | A_ExprItem {
+function parseExpressionDecl_0(p: ParseContext): A_OperatorLevel | A_ExprItem {
     if (p.match("atom")) {
-        return parseExprItem(p, state);
+        return parseExprItem(p);
     } else if (p.match("level")) {
-        return parseOperatorLevel(p, state);
+        return parseOperatorLevel(p);
     } else {
         p.throwSyntaxError("unexpected token");
     }
@@ -108,15 +96,10 @@ function parseExpressionDecl_0(p: ParseContext, state: ParseState): A_OperatorLe
 
 export type A_ExprItem = { kind: "ExprItem"; name: string; };
 
-function parseExprItem(p: ParseContext, state: ParseState): A_ExprItem {
+function parseExprItem(p: ParseContext): A_ExprItem {
     p.forward("atom");
 
-    let name: string;
-    if (p.match({ kind: "Word" })) {
-        name = parseIdent(p, state);
-    } else {
-        p.throwSyntaxError("unexpected token");
-    }
+    let name: string = parseIdent(p);
 
     return { kind: "ExprItem", name };
 }
@@ -124,14 +107,14 @@ function parseExprItem(p: ParseContext, state: ParseState): A_ExprItem {
 
 export type A_OperatorLevel = { kind: "OperatorLevel"; children: A_OperatorItem[]; };
 
-function parseOperatorLevel(p: ParseContext, state: ParseState): A_OperatorLevel {
+function parseOperatorLevel(p: ParseContext): A_OperatorLevel {
     p.forward("level");
 
     p.forwardWithExpect("{");
 
     let children: A_OperatorItem[] = [];
     while (p.match("prefix") || p.match("infix") || p.match("postfix")) {
-        children.push(parseOperatorItem(p, state));
+        children.push(parseOperatorItem(p));
     }
 
     p.forwardWithExpect("}");
@@ -142,15 +125,24 @@ function parseOperatorLevel(p: ParseContext, state: ParseState): A_OperatorLevel
 
 export type A_OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
 
-function parseOperatorItem(p: ParseContext, state: ParseState): A_OperatorItem {
-    const operatorKind = p.getValue();
-    p.forward();
+function parseOperatorItem(p: ParseContext): A_OperatorItem {
+    let operatorKind: string;
+    if (p.match("prefix")) {
+        p.forward("prefix");
+        operatorKind = "prefix";
+    } else if (p.match("infix")) {
+        p.forward("infix");
+        operatorKind = "infix";
+    } else if (p.match("postfix")) {
+        p.forward("postfix");
+        operatorKind = "postfix";
+    } else {
+        p.throwSyntaxError("unexpected token");
+    }
 
-    p.forwardWithExpect({ word: "operator" });
+    p.forwardWithExpect("operator");
 
-    p.expect({ kind: "String" });
-    let value = p.getValue();
-    p.forward();
+    let value = parseString(p);
 
     return { kind: "OperatorItem", operatorKind, value };
 }
@@ -163,28 +155,12 @@ export type A_Sequence = {};
 export type A_Alternate = {};
 // TODO
 
-function parseIdent(p: ParseContext, state: ParseState): string {
+function parseIdent(p: ParseContext): string {
     const name = p.getValue();
     p.forward();
 
     return name;
 }
-
-// const spaces: string[] = [];
-// while (!this.input.eof()) {
-//     if ("\r\n" === input.getChar(2)) {
-//         spaces.push("\r\n");
-//         input.nextChar(2);
-//     } else if (["\r", "\n"].includes(input.getChar())) {
-//         spaces.push(input.getChar());
-//         input.nextChar();
-//     } else if ([" ", "\t"].includes(input.getChar())) {
-//         spaces.push(input.getChar());
-//         input.nextChar();
-//     } else {
-//         break;
-//     }
-// }
 
 // if (/^[a-z0-9]$/i.test(char)) {
 //     let buf = "";
@@ -197,27 +173,43 @@ function parseIdent(p: ParseContext, state: ParseState): string {
 //     return TOKEN("Word", { value: buf });
 // }
 
-// if (char === "\"") {
-//     let buf = "";
-//     input.nextChar();
-//     while (!input.eof()) {
-//         if (input.getChar() === "\"") break;
-//         buf += input.getChar();
-//         input.nextChar();
-//     }
-//     if (!input.eof()) {
-//         input.nextChar();
-//     }
-//     return TOKEN("String", { value: buf });
-// }
-
-function parseExpr(p: ParseContext, state: ParseState): A_Expr {
-    return parseExprBp(p, state, 0);
+function parse_(p: ParseContext): string {
+    const beginIndex = p.input.index;
+    while (!p.eof() && (p.match(" ") || p.match("\t") || p.match("\r\n") || p.match("\n"))) {
+        if (p.match(" ")) {
+            p.forward(1);
+        } else if (p.match("\t")) {
+            p.forward(1);
+        } else if (p.match("\r\n")) {
+            p.forward(2);
+        } else if (p.match("\n")) {
+            p.forward(1);
+        }
+    }
+    const endIndex = p.input.index;
+    return p.input.sliceRange(beginIndex, endIndex);
 }
 
-type PrefixOperator = { kind: "PrefixOperator", tokenKind: TokenKind, bp: number };
-type InfixOperator = { kind: "InfixOperator", tokenKind: TokenKind, lbp: number, rbp: number };
-type PostfixOperator = { kind: "PostfixOperator", tokenKind: TokenKind, bp: number };
+function parseString(p: ParseContext): string {
+    p.forwardWithExpect("\"");
+
+    let buf = "";
+    while (!(p.eof() || p.match("\""))) {
+        buf += p.getSlice(1);
+    }
+
+    p.forwardWithExpect("\"");
+
+    return buf;
+}
+
+function parseExpr(p: ParseContext): A_Expr {
+    return parseExprBp(p, 0);
+}
+
+type PrefixOperator = { kind: "PrefixOperator", tokenKind: string, bp: number };
+type InfixOperator = { kind: "InfixOperator", tokenKind: string, lbp: number, rbp: number };
+type PostfixOperator = { kind: "PostfixOperator", tokenKind: string, bp: number };
 type AnyOperator = PrefixOperator | InfixOperator | PostfixOperator;
 
 const operators: AnyOperator[] = [
@@ -231,14 +223,14 @@ const operators: AnyOperator[] = [
 // 例えば、InfixOperatorではlbpを大きくすると右結合、rbpを大きくすると左結合の演算子になります。
 // 詳細はpratt parsingの説明ページを参照してください。
 
-function parseExprBp(p: ParseContext, state: ParseState, minBp: number): A_Expr {
+function parseExprBp(p: ParseContext, minBp: number): A_Expr {
     let expr: A_Expr;
     const tokenKind = p.getToken().kind;
     const prefix = operators.find((x): x is PrefixOperator => x.kind === "PrefixOperator" && x.tokenKind === tokenKind);
     if (prefix != null) {
-        expr = handlePrefixOperator(p, state, prefix.bp);
+        expr = handlePrefixOperator(p, prefix.bp);
     } else {
-        expr = handleAtom(p, state);
+        expr = handleAtom(p);
     }
     while (true) {
         const tokenKind = p.getToken().kind;
@@ -247,7 +239,7 @@ function parseExprBp(p: ParseContext, state: ParseState, minBp: number): A_Expr 
             if (postfix.bp < minBp) {
                 break;
             }
-            expr = handlePostfixOperator(p, state, expr);
+            expr = handlePostfixOperator(p, expr);
             continue;
         }
         const infix = operators.find((x): x is InfixOperator => x.kind === "InfixOperator" && x.tokenKind === tokenKind);
@@ -255,7 +247,7 @@ function parseExprBp(p: ParseContext, state: ParseState, minBp: number): A_Expr 
             if (infix.lbp < minBp) {
                 break;
             }
-            expr = handleInfixOperator(p, state, expr, infix.rbp);
+            expr = handleInfixOperator(p, expr, infix.rbp);
             continue;
         }
         break;
@@ -263,18 +255,18 @@ function parseExprBp(p: ParseContext, state: ParseState, minBp: number): A_Expr 
     return expr;
 }
 
-function handlePrefixOperator(p: ParseContext, state: ParseState, minBp: number): A_Expr {
+function handlePrefixOperator(p: ParseContext, minBp: number): A_Expr {
     p.throwSyntaxError("not implemented");
 }
 
-function handleInfixOperator(p: ParseContext, state: ParseState, left: A_Expr, minBp: number): A_Expr {
+function handleInfixOperator(p: ParseContext, left: A_Expr, minBp: number): A_Expr {
     p.throwSyntaxError("not implemented");
 }
 
-function handlePostfixOperator(p: ParseContext, state: ParseState, expr: A_Expr): A_Expr {
+function handlePostfixOperator(p: ParseContext, expr: A_Expr): A_Expr {
     p.throwSyntaxError("not implemented");
 }
 
-function handleAtom(p: ParseContext, state: ParseState): A_Expr {
+function handleAtom(p: ParseContext): A_Expr {
     p.throwSyntaxError("not implemented");
 }

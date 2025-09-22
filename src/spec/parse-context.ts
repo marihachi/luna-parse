@@ -31,6 +31,10 @@ export class Input {
         return this.source.slice(this.index, this.index + length);
     }
 
+    sliceRange(beginIndex: number, endIndex: number) {
+        return this.source.slice(beginIndex, endIndex);
+    }
+
     nextChar(length: number = 1): void {
         while (length > 0) {
             if (this.eof()) {
@@ -61,7 +65,7 @@ export class ParseError extends Error {
 }
 
 export class ParseContext {
-    private input: Input;
+    input: Input;
 
     constructor(source: string) {
         this.input = new Input(source);

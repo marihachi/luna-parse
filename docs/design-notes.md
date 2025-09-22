@@ -17,9 +17,7 @@ parser Parser {
     operatorGroup = "operator" "group" _ "{" _ operators _ "}";
     operators = operator? (_ operator)*;
     operator = ("prefix" / "infix" / "postfix") _ "operator" STR;
-    _ = (WSP / LF)*;
-    WSP = " " / "\t";
-    LF = "\r\n" / "\n";
+    _ = (" " / "\t" / "\r\n" / "\n")*;
     STR = "\"" StrChar* "\"";
     StrChar
         = EscapeSeq
