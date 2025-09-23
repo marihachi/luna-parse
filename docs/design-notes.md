@@ -1,51 +1,46 @@
 ## lunaparseの文法
 ```
-parser Parser {
-    root = _ toplevels? _;
-    toplevels = toplevel (_ toplevel)*
+parser SpecParser {
+    root = toplevel*;
     toplevel = parserBlock / lexerBlock / exprBlock;
-    parserBlock = PARSER _ OPEN_BRACKET _ CLOSE_BRACKET;
-    ruleStatement = IDENT _ EQ _ expr;
-    lexerBlock = LEXER _ OPEN_BRACKET _ CLOSE_BRACKET;
-    exprBlock = EXPRESSION _ IDENT _ OPEN_BRACKET _ exprGroups? _ CLOSE_BRACKET;
-    exprGroups = exprGroup (_ exprGroup)*
-    exprGroup = OPERATOR GROUP _ OPEN_BRACKET _ exprOperators? _ CLOSE_BRACKET;
-    exprOperators = exprOperator (_ exprOperator)*
-    exprOperator = (PREFIX | INFIX | POSTFIX) _ OPERATOR IDENT;
-    item = IDENT | DOT | OPEN_PAREN expr CLOSE_PAREN;
-    _ = (WSP / LF)*
+    parserBlock = Parser OpenBracket CloseBracket;
+    ruleStatement = Ident Equal expr;
+    lexerBlock = Lexer OpenBracket CloseBracket;
+    exprBlock = Expression Ident OpenBracket exprGroup* CloseBracket;
+    exprGroup = Operator Group OpenBracket exprOperator* CloseBracket;
+    exprOperator = (Prefix / Infix / Postfix) Operator Ident;
+    item = Ident / Dot / OpenParen expr CloseParen;
 }
 
-lexer Lexer {
-    WSP = " " / "\t";
-    LF = "\r\n" / "\n";
-    ASTA = "*";
-    PLUS = "+";
-    EXCL = "!";
-    QUES = "?";
-    SLASH = "/";
-    DOT = ".";
-    EQ = "=";
-    OPEN_BRACKET = "{";
-    CLOSE_BRACKET = "}";
-    OPEN_PAREN = "(";
-    CLOSE_PAREN = ")";
-    PARSER = "parser";
-    LEXER = "lexer";
-    EXPRESSION = "expression";
-    PREFIX = "prefix";
-    INFIX = "infix";
-    POSTFIX = "postfix";
-    OPERATOR = "operator";
-    GROUP = "group";
-    STR = "\"" (!"\"" .)+ "\"";
-    IDENT = [a-zA-Z_] ([a-zA-Z_] / [0-9])*;
+lexer SpecLexer {
+    " " / "\t" / "\r\n" / "\n" => {};
+    "*" => ASTA;
+    "+" => PLUS;
+    "!" => EXCL;
+    "?" => QUES;
+    "/" => SLASH;
+    "." => Dot;
+    "=" => Equal;
+    "{" => OpenBracket;
+    "}" => CloseBracket;
+    "(" => OpenParen;
+    ")" => CloseParen;
+    "parser" => Parser;
+    "lexer" => Lexer;
+    "expression" => Expression;
+    "prefix" => Prefix;
+    "infix" => Infix;
+    "postfix" => Postfix;
+    "operator" => Operator;
+    "group" => Group;
+    "\"" (!"\"" .)+ "\"" => Str;
+    [a-zA-Z_] [a-zA-Z0-9_]* => Ident;
 }
 ```
 
 例
 ```
-parser Parser {
+parser ExampleParser {
     parent = sub*;
     sub = sub1 / sub2;
     sub1 = "sub1";
