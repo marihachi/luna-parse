@@ -1,21 +1,21 @@
 ## lunaparseの文法
 ```
 parser Parser {
-    root = _ toplevels _;
-    toplevels = toplevel? (_ toplevel)*;
+    root = _ toplevels? _;
+    toplevels = toplevel (_ toplevel)*;
     toplevel = parserBlock / exprBlock;
-    parserBlock = "parser" _ IDENT _ "{" _ rules _ "}";
-    rules = rule? (_ rule)*;
+    parserBlock = "parser" _ IDENT _ "{" _ rules? _ "}";
+    rules = rule (_ rule)*;
     rule = IDENT _ "=" _ expr1 _ ";";
     expr1 = expr2 (_ "/" _ expr2)*;
     expr2 = expr3 (_ expr3)*;
     expr3 = expr4 _ ("*" / "+" / "?")?;
     expr4 = ("&" / "!")? _ atom;
     atom = "(" expr1 ")" / "." / STR / CharMatch / IDENT;
-    exprBlock = "expression" _ IDENT _ "{" _ operatorGroups _ "}";
-    operatorGroups = operatorGroup? (_ operatorGroup)*;
-    operatorGroup = "operator" "group" _ "{" _ operators _ "}";
-    operators = operator? (_ operator)*;
+    exprBlock = "expression" _ IDENT _ "{" _ operatorGroups? _ "}";
+    operatorGroups = operatorGroup (_ operatorGroup)*;
+    operatorGroup = "operator" "group" _ "{" _ operators? _ "}";
+    operators = operator (_ operator)*;
     operator = ("prefix" / "infix" / "postfix") _ "operator" STR;
     _ = (" " / "\t" / "\r\n" / "\n")*;
     STR = "\"" StrChar* "\"";
@@ -28,7 +28,7 @@ parser Parser {
         = EscapeSeq
         / !"]" .;
     EscapeSeq = "\\" ("\\" / "\"" / "n" / "r" / "t");
-    IDENT = [a-zA-Z_] ([a-zA-Z_] / [0-9])*;
+    IDENT = [a-zA-Z_] [a-zA-Z0-9_]*;
 }
 ```
 

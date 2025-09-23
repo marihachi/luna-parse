@@ -15,6 +15,19 @@ export function parse(source: string): A_Toplevel[] {
     return children;
 }
 
+function parseToplevels(p: ParseContext): A_Toplevel[] {
+    parse_(p);
+
+    const children: A_Toplevel[] = [];
+    while (p.match("parser") || p.match("expression")) {
+        children.push(parseToplevel(p));
+    }
+
+    parse_(p);
+
+    return children;
+}
+
 
 export type A_Toplevel = A_ConfigDecl | A_RuleDecl | A_ExpressionDecl;
 
@@ -34,10 +47,12 @@ function parseToplevel(p: ParseContext): A_Toplevel {
 export type A_ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
 
 function parseConfigDecl(p: ParseContext): A_ConfigDecl {
-    p.acceptMatch();
+    p.consume();
 
+    p.expect(/[a-zA-Z_]/);
     const key = parseIdent(p);
 
+    p.expect(/[a-zA-Z_]/);
     const value = parseIdent(p);
 
     return { kind: "ConfigDecl", key, value };
@@ -47,18 +62,15 @@ function parseConfigDecl(p: ParseContext): A_ConfigDecl {
 export type A_RuleDecl = { kind: "RuleDecl"; name: string; children: string };
 
 function parseRuleDecl(p: ParseContext): A_RuleDecl {
-    p.acceptMatch();
+    p.consume();
 
+    p.expect(/[a-zA-Z_]/);
     const name = parseIdent(p);
 
     p.forwardWithExpect("=");
 
-    let children: string | undefined;
-    if (p.match(parseIdent)) {
-        children = parseIdent(p);
-    } else {
-        p.throwSyntaxError("unexpected token");
-    }
+    p.expect(/[a-zA-Z_]/);
+    const children = parseIdent(p);
 
     return { kind: "RuleDecl", name, children };
 }
@@ -67,8 +79,9 @@ function parseRuleDecl(p: ParseContext): A_RuleDecl {
 export type A_ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (A_OperatorLevel | A_ExprItem)[]; };
 
 function parseExpressionDecl(p: ParseContext): A_ExpressionDecl {
-    p.acceptMatch();
+    p.consume();
 
+    p.expect(/[a-zA-Z_]/);
     const name = parseIdent(p);
 
     p.forwardWithExpect("{");
@@ -97,8 +110,9 @@ function parseExpressionDecl_0(p: ParseContext): A_OperatorLevel | A_ExprItem {
 export type A_ExprItem = { kind: "ExprItem"; name: string; };
 
 function parseExprItem(p: ParseContext): A_ExprItem {
-    p.acceptMatch();
+    p.consume();
 
+    p.expect(/[a-zA-Z_]/);
     let name: string = parseIdent(p);
 
     return { kind: "ExprItem", name };
@@ -108,7 +122,7 @@ function parseExprItem(p: ParseContext): A_ExprItem {
 export type A_OperatorLevel = { kind: "OperatorLevel"; children: A_OperatorItem[]; };
 
 function parseOperatorLevel(p: ParseContext): A_OperatorLevel {
-    p.acceptMatch();
+    p.consume();
 
     p.forwardWithExpect("{");
 
@@ -126,7 +140,7 @@ function parseOperatorLevel(p: ParseContext): A_OperatorLevel {
 export type A_OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
 
 function parseOperatorItem(p: ParseContext): A_OperatorItem {
-    const operatorKind: string = p.acceptMatch() as string;
+    const operatorKind: string = p.consume() as string;
 
     p.forwardWithExpect("operator");
 
@@ -144,38 +158,27 @@ export type A_Alternate = {};
 // TODO
 
 function parseIdent(p: ParseContext): string {
-    const name = p.getValue();
-    p.forward();
+    let buf = "";
+    buf += p.consume();
 
-    return name;
+    while (p.match(/[a-zA-Z0-9_]/)) {
+        buf += p.consume();
+    }
+
+    return buf;
 }
 
-// if (/^[a-z0-9]$/i.test(char)) {
-//     let buf = "";
-//     buf += char;
-//     input.nextChar();
-//     while (!input.eof() && /^[a-z0-9]$/i.test(input.getChar())) {
-//         buf += input.getChar();
-//         input.nextChar();
-//     }
-//     return TOKEN("Word", { value: buf });
-// }
-
+/**
+ * ```
+ * _ = (" " / "\t" / "\r\n" / "\n")*;
+ * ```
+*/
 function parse_(p: ParseContext): string {
-    const beginIndex = p.input.index;
+    let buf = "";
     while (p.match(" ") || p.match("\t") || p.match("\r\n") || p.match("\n")) {
-        if (p.match(" ")) {
-            p.forward(1);
-        } else if (p.match("\t")) {
-            p.forward(1);
-        } else if (p.match("\r\n")) {
-            p.forward(2);
-        } else if (p.match("\n")) {
-            p.forward(1);
-        }
+        buf += p.consume();
     }
-    const endIndex = p.input.index;
-    return p.input.sliceRange(beginIndex, endIndex);
+    return buf;
 }
 
 function parseString(p: ParseContext): string {

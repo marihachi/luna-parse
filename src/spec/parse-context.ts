@@ -51,10 +51,6 @@ export class Input {
     }
 }
 
-export type MatchSpecifier = string | ParseFunction;
-export type ForwardSpecifier = string | number;
-export type ParseFunction = (p: ParseContext) => unknown;
-
 export class ParseError extends Error {
     constructor(message?: string) {
         super(message);
@@ -63,7 +59,7 @@ export class ParseError extends Error {
 
 export class ParseContext {
     input: Input;
-    lastMatch: { index: number; result: unknown; } | undefined;
+    lastMatch: string | undefined;
 
     constructor(source: string) {
         this.input = new Input(source);
@@ -83,60 +79,59 @@ export class ParseContext {
     }
 
     /** 現在位置から始まる文字列が指定した条件を満たしているかどうかを返します。 */
-    match(specifier: MatchSpecifier): boolean {
+    match(specifier: string | RegExp): boolean {
         if (typeof specifier === "string") {
-            return this.input.getChar(specifier.length) === specifier;
-        } else {
-            const beginIndex = this.input.index;
-            try {
-                const result = specifier(this);
-                this.lastMatch = { index: this.input.index, result: result };
-                return true;
-            } catch (e) {
-                if (e instanceof ParseError) {
-                    return false;
-                }
-                throw e;
-            } finally {
-                this.input.index = beginIndex;
+            const isMatched = this.input.getChar(specifier.length) === specifier;
+            if (isMatched) {
+                this.lastMatch = specifier;
+            } else {
+                this.lastMatch = undefined;
             }
+            return isMatched;
+        } else {
+            const re = new RegExp(`^${specifier.source}`, specifier.flags);
+            const reResult = re.exec(this.input.source.slice(this.input.index));
+            if (reResult != null) {
+                this.lastMatch = reResult[0];
+            } else {
+                this.lastMatch = undefined;
+            }
+            return reResult != null;
         }
     }
 
     /** 直前にマッチした内容を受け入れて、現在位置を進めます。 */
-    acceptMatch(): unknown {
+    consume(): string {
         if (this.lastMatch == null) {
-            throw new Error("not matched yet");
+            throw new Error("not matched");
         }
-        this.input.index = this.lastMatch.index;
-        return this.lastMatch.result;
+        const str = this.lastMatch;
+        this.lastMatch = undefined;
+        this.input.nextChar(str.length);
+        return str;
     }
 
     /** 現在位置を次の位置に進めます。 */
-    forward(specifier: ForwardSpecifier): void {
-        if (typeof specifier === "number") {
-            this.input.nextChar(specifier);
-        } else {
-            this.input.nextChar(specifier.length);
-        }
+    forward(specifier: number): void {
+        this.input.nextChar(specifier);
     }
 
     /**
      * 現在位置から始まる文字列が指定した条件を満たしていることを確認し、条件を満たしていれば次のトークンに進みます。
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
-    forwardWithExpect(slice: string): void {
+    forwardWithExpect(slice: string | RegExp): string {
         this.expect(slice);
-        this.forward(slice);
+        return this.consume();
     }
 
     /**
      * 現在位置から始まる文字列が指定した条件を満たしていることを確認します。
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
-    expect(slice: string): void {
+    expect(slice: string | RegExp): void {
         if (!this.match(slice)) {
-            const currentChar: MatchSpecifier = this.getSlice(1);
+            const currentChar = this.getSlice(1);
             this.throwSyntaxError(`Expected "${slice}", but got '${currentChar}'`);
         }
     }
@@ -147,7 +142,7 @@ export class ParseContext {
     */
     expectEOF(): void {
         if (!this.eof()) {
-            const currentChar: MatchSpecifier = this.getSlice(1);
+            const currentChar = this.getSlice(1);
             this.throwSyntaxError(`Expected EOF, but got '${currentChar}'`);
         }
     }
