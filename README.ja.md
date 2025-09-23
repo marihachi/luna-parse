@@ -35,8 +35,9 @@ parser ExampleParser {
 }
 
 lexer ExampleLexer {
-    ignored token SPACE = " " ;
-    ignored token LF = "\r\n" / "\n" ;
+    ignored token SPACING = SPACE / LF ;
+    SPACE = " " ;
+    LF = "\r\n" / "\n" ;
     token ASTA = "*" ;
     token SLASH = "/" ;
     token PLUS = "+" ;
