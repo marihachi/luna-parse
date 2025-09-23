@@ -16,7 +16,7 @@ parser SpecParser {
     lexerExpr2 = lexerExpr3+;
     lexerExpr3 = lexerExpr4 (Asta / Plus / Ques)?;
     lexerExpr4 = (Amp / Excl)? lexerAtom;
-    lexerAtom = OpenParen lexerExpr1 CloseParen / Dot / Str / CharRange;
+    lexerAtom = OpenParen lexerExpr1 CloseParen / Dot / Dollar / Str / CharRange / Ident;
     expressionBlock = Expression Ident OpenBracket operatorGroup* CloseBracket;
     operatorGroup = Operator Group OpenBracket operatorRule* CloseBracket;
     operatorRule = (Prefix / Infix / Postfix) Operator Ident;
@@ -31,6 +31,7 @@ lexer SpecLexer {
     token Ques = "?";
     token Slash = "/";
     token Dot = ".";
+    token Dollar = "$";
     token Arrow = "=>";
     token Equal = "=";
     token Semi = ";";
@@ -48,9 +49,11 @@ lexer SpecLexer {
     token Postfix = "postfix";
     token Operator = "operator";
     token Group = "group";
-    token Str = "\"" (!"\"" ("\\" ("\\" / "\"" / "r" / "n" / "t") / .))+ "\"" => { token.value = text(); };
+    token Str = "\"" (!"\"" (EscapeSeq / .))+ "\"" => { token.value = text(); };
     token CharRange = "[" (!"]" (&(. "-") . "-" . / .))+ "]" => { token.value = text(); };
+    EscapeSeq = "\\" ("\\" / "\"" / "r" / "n" / "t");
     token Ident = [a-zA-Z_] [a-zA-Z0-9_]* => { token.value = text(); };
+    token EOF = $;
 }
 ```
 
