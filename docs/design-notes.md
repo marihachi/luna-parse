@@ -2,25 +2,38 @@
 ```
 parser SpecParser {
     root = toplevel*;
-    toplevel = parserBlock / lexerBlock / exprBlock;
-    parserBlock = Parser OpenBracket CloseBracket;
-    ruleStatement = Ident Equal expr;
-    lexerBlock = Lexer OpenBracket CloseBracket;
-    exprBlock = Expression Ident OpenBracket exprGroup* CloseBracket;
-    exprGroup = Operator Group OpenBracket exprOperator* CloseBracket;
-    exprOperator = (Prefix / Infix / Postfix) Operator Ident;
-    item = Ident / Dot / OpenParen expr CloseParen;
+    toplevel = parserBlock / lexerBlock / expressionBlock;
+    parserBlock = Parser Ident OpenBracket rule* CloseBracket;
+    rule = Ident Equal expr1 Semi;
+    expr1 = expr2 (Slash expr2)*;
+    expr2 = expr3+;
+    expr3 = expr4 (Asta / Plus / Ques)?;
+    expr4 = (Amp / Excl)? atom;
+    atom = OpenParen expr1 CloseParen / Ident;
+    lexerBlock = Lexer Ident OpenBracket lexerRule* CloseBracket;
+    lexerRule = lexerExpr1 Arrow (Ident / OpenBracket CloseBracket)
+    lexerExpr1 = lexerExpr2 (Slash lexerExpr2)*;
+    lexerExpr2 = lexerExpr3+;
+    lexerExpr3 = lexerExpr4 (Asta / Plus / Ques)?;
+    lexerExpr4 = (Amp / Excl)? lexerAtom;
+    lexerAtom = OpenParen lexerExpr1 CloseParen / Dot / Str / CharRange;
+    expressionBlock = Expression Ident OpenBracket operatorGroup* CloseBracket;
+    operatorGroup = Operator Group OpenBracket operatorRule* CloseBracket;
+    operatorRule = (Prefix / Infix / Postfix) Operator Ident;
 }
 
 lexer SpecLexer {
     " " / "\t" / "\r\n" / "\n" => {};
-    "*" => ASTA;
-    "+" => PLUS;
-    "!" => EXCL;
-    "?" => QUES;
-    "/" => SLASH;
+    "*" => Asta;
+    "+" => Plus;
+    "!" => Excl;
+    "&" => Amp;
+    "?" => Ques;
+    "/" => Slash;
     "." => Dot;
+    "=>" => Arrow;
     "=" => Equal;
+    ";" => Semi;
     "{" => OpenBracket;
     "}" => CloseBracket;
     "(" => OpenParen;
@@ -33,8 +46,9 @@ lexer SpecLexer {
     "postfix" => Postfix;
     "operator" => Operator;
     "group" => Group;
-    "\"" (!"\"" .)+ "\"" => Str;
-    [a-zA-Z_] [a-zA-Z0-9_]* => Ident;
+    "\"" (!"\"" ("\\" ("\\" / "\"" / "r" / "n" / "t") / .))+ "\"" => Str(text());
+    "[" (!"]" (&(. "-") . "-" . / .))+ "]" => CharRange(text());
+    [a-zA-Z_] [a-zA-Z0-9_]* => Ident(text());
 }
 ```
 
