@@ -11,7 +11,7 @@ parser SpecParser {
     expr4 = (Amp / Excl)? atom;
     atom = OpenParen expr1 CloseParen / Ident;
     lexerBlock = Lexer Ident OpenBracket lexerRule* CloseBracket;
-    lexerRule = lexerExpr1 Arrow (Ident / OpenBracket CloseBracket)
+    lexerRule = (Ignored? Token)? Ident Equal lexerExpr1 (Arrow OpenBracket CloseBracket)? Semi;
     lexerExpr1 = lexerExpr2 (Slash lexerExpr2)*;
     lexerExpr2 = lexerExpr3+;
     lexerExpr3 = lexerExpr4 (Asta / Plus / Ques)?;
@@ -23,32 +23,34 @@ parser SpecParser {
 }
 
 lexer SpecLexer {
-    " " / "\t" / "\r\n" / "\n" => {};
-    "*" => Asta;
-    "+" => Plus;
-    "!" => Excl;
-    "&" => Amp;
-    "?" => Ques;
-    "/" => Slash;
-    "." => Dot;
-    "=>" => Arrow;
-    "=" => Equal;
-    ";" => Semi;
-    "{" => OpenBracket;
-    "}" => CloseBracket;
-    "(" => OpenParen;
-    ")" => CloseParen;
-    "parser" => Parser;
-    "lexer" => Lexer;
-    "expression" => Expression;
-    "prefix" => Prefix;
-    "infix" => Infix;
-    "postfix" => Postfix;
-    "operator" => Operator;
-    "group" => Group;
-    "\"" (!"\"" ("\\" ("\\" / "\"" / "r" / "n" / "t") / .))+ "\"" => Str(text());
-    "[" (!"]" (&(. "-") . "-" . / .))+ "]" => CharRange(text());
-    [a-zA-Z_] [a-zA-Z0-9_]* => Ident(text());
+    ignored token Spacing = " " / "\t" / "\r\n" / "\n";
+    token Asta = "*";
+    token Plus = "+";
+    token Excl = "!";
+    token Amp = "&";
+    token Ques = "?";
+    token Slash = "/";
+    token Dot = ".";
+    token Arrow = "=>";
+    token Equal = "=";
+    token Semi = ";";
+    token OpenBracket = "{";
+    token CloseBracket = "}";
+    token OpenParen = "(";
+    token CloseParen = ")";
+    token Parser = "parser";
+    token Lexer = "lexer";
+    token Ignored = "ignored";
+    token Token = "token";
+    token Expression = "expression";
+    token Prefix = "prefix";
+    token Infix = "infix";
+    token Postfix = "postfix";
+    token Operator = "operator";
+    token Group = "group";
+    token Str = "\"" (!"\"" ("\\" ("\\" / "\"" / "r" / "n" / "t") / .))+ "\"" => { token.value = text(); };
+    token CharRange = "[" (!"]" (&(. "-") . "-" . / .))+ "]" => { token.value = text(); };
+    token Ident = [a-zA-Z_] [a-zA-Z0-9_]* => { token.value = text(); };
 }
 ```
 
@@ -57,8 +59,8 @@ lexer SpecLexer {
 parser ExampleParser {
     parent = sub*;
     sub = sub1 / sub2;
-    sub1 = "sub1";
-    sub2 = "sub2";
+    sub1 = "sub1" "continued1";
+    sub2 = "sub2" "continued2";
 }
 ```
 ```ts
@@ -81,11 +83,13 @@ function parseSub(s: Scan): Sub {
 type Sub1 = { kind: "sub1" };
 function parseSub1(s: Scan): Sub1 {
     s.forward();
+    s.forwardWithExpect("continued1");
     return { kind: "sub1" };
 }
 type Sub2 = { kind: "sub2" };
 function parseSub2(s: Scan): Sub2 {
     s.forward();
+    s.forwardWithExpect("continued2");
     return { kind: "sub2" };
 }
 ```
