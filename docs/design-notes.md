@@ -2,14 +2,14 @@
 ```
 parser SpecParser {
     root = toplevel*;
-    toplevel = parserBlock / lexerBlock / expressionBlock;
+    toplevel = parserBlock / lexerBlock;
     parserBlock = Parser Ident OpenBracket rule* CloseBracket;
     rule = Ident Equal expr1 Semi;
     expr1 = expr2 (Slash expr2)*;
     expr2 = expr3+;
     expr3 = expr4 (Asta / Plus / Ques)?;
     expr4 = (Amp / Excl)? atom;
-    atom = OpenParen expr1 CloseParen / Ident;
+    atom = OpenParen expr1 CloseParen / expressionBlock / Ident;
     lexerBlock = Lexer Ident OpenBracket lexerRule* CloseBracket;
     lexerRule = (Ignored? Token)? Ident Equal lexerExpr1 (Arrow OpenBracket CloseBracket)? Semi;
     lexerExpr1 = lexerExpr2 (Slash lexerExpr2)*;
@@ -17,7 +17,7 @@ parser SpecParser {
     lexerExpr3 = lexerExpr4 (Asta / Plus / Ques)?;
     lexerExpr4 = (Amp / Excl)? lexerAtom;
     lexerAtom = OpenParen lexerExpr1 CloseParen / Dot / Dollar / Str / CharRange / Ident;
-    expressionBlock = Expression Ident OpenBracket operatorGroup* CloseBracket;
+    expressionBlock = Expression OpenBracket operatorGroup* CloseBracket;
     operatorGroup = Operator Group OpenBracket operatorRule* CloseBracket;
     operatorRule = (Prefix / Infix / Postfix) Operator Ident;
 }
