@@ -15,39 +15,38 @@ I am currently developing it!
 An example of spec file:
 ```
 parser ExampleParser {
-    root = topLevel (LF? topLevel)* ;
+    root = topLevel+ ;
     topLevel = declareVar / show ;
-    declareVar = VAR LF? IDENT LF? EQUAL LF? expr LF? SEMI ;
-    show = SHOW LF? expr LF? SEMI ;
+    declareVar = VAR IDENT EQUAL expr SEMI ;
+    show = SHOW expr SEMI ;
     term = NUMBER / IDENT ;
-}
 
-expression ExampleExpression {
-    rule expr ;
-    atom term ;
-    operator group {
-        infix operator ASTA ;
-        infix operator SLASH ;
-    }
-    operator group {
-        infix operator PLUS ;
-        infix operator MINUS ;
-    }
+    expr = expression {
+        atom term ;
+        operator group {
+            infix operator ASTA ;
+            infix operator SLASH ;
+        }
+        operator group {
+            infix operator PLUS ;
+            infix operator MINUS ;
+        }
+    };
 }
 
 lexer ExampleLexer {
-    [ignored] SPACE = " " ;
-    [ignored] LF = "\r\n" / "\n" ;
-    ASTA = "*" ;
-    SLASH = "/" ;
-    PLUS = "+" ;
-    MINUS = "-" ;
-    EQUAL = "=" ;
-    SEMI = ";" ;
-    SHOW = "show" ;
-    VAR = "var" ;
-    NUMBER = [1-9] [0-9]* ;
-    IDENT = [a-zA-Z] ([a-zA-Z] / [0-9])* ;
+    ignored token SPACE = " " ;
+    ignored token LF = "\r\n" / "\n" ;
+    token ASTA = "*" ;
+    token SLASH = "/" ;
+    token PLUS = "+" ;
+    token MINUS = "-" ;
+    token EQUAL = "=" ;
+    token SEMI = ";" ;
+    token SHOW = "show" ;
+    token VAR = "var" ;
+    token NUMBER = [1-9] [0-9]* => { token.value = text(); };
+    token IDENT = [a-zA-Z] [a-zA-Z0-9_]* => { token.value = text(); };
 }
 ```
 Parser input:
