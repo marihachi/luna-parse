@@ -337,6 +337,6 @@ export function getTokenString(specifier: TokenSpecifier): string {
     if (kind === "Operator") return "`operator`";
     if (kind === "Group") return "`group`";
     if (kind === "Str" && value != null) return `\`"${value}"\``;
-    if (kind === "Ident" && value != null) return `\`"${value}"\``;
+    if (kind === "Ident" && value != null) return `\`${value}\``;
     return kind;
 }

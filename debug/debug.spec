@@ -3,5 +3,7 @@ parser DebugParser {
 }
 
 lexer DebugLexer {
-    Root = Sub1;
+    Rule1 = Sub1;
+    token Rule2 = Sub1;
+    ignored token Rule3 = Sub1;
 }

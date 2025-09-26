@@ -108,13 +108,10 @@ function parseLexerRule(s: Lexer, state: ParseState): A_LexerRule {
         ruleAttr = "token";
     }
     if (s.match({ kind: "Token" }, 1)) {
-        if (s.match({ kind: "Ignored" })) {
-            s.forward();
-            s.forward();
-            ruleAttr = "ignoredToken";
-        } else {
-            s.throwSyntaxError("unexpected token");
-        }
+        s.expect({ kind: "Ignored" });
+        s.forward();
+        s.forward();
+        ruleAttr = "ignoredToken";
     }
 
     s.expect({ kind: "Ident" });
