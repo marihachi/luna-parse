@@ -100,10 +100,14 @@ export class Lexer {
     }
 
     /** 次のトークンに進みます。 */
-    forward(): void {
+    forward(): Token {
         // 現在のトークンが既に読まれていれば、現在のトークンを破棄
         if (this.tokens.length > 0) {
+            const token = this.tokens[0];
             this.tokens.splice(0, 1);
+            return token;
+        } else {
+            throw new Error("No token read");
         }
     }
 

@@ -10,7 +10,7 @@ export function parse(source: string): A_Toplevel[] {
     const state: ParseState = {};
 
     const children: A_Toplevel[] = [];
-    while (s.match({ word: "config" }) || s.match({ word: "rule" }) || s.match({ word: "expression" })) {
+    while (s.match({ kind: "Parser" }) || s.match({ kind: "Lexer" })) {
         children.push(parseToplevel(s, state));
     }
 
@@ -20,35 +20,54 @@ export function parse(source: string): A_Toplevel[] {
 }
 
 
-export type A_Toplevel = A_ConfigDecl | A_RuleDecl | A_ExpressionDecl;
+export type A_Toplevel = A_ParserBlock | A_LexerBlock;
 
 function parseToplevel(s: Lexer, state: ParseState): A_Toplevel {
-    if (s.match({ word: "config" })) {
-        return parseConfigDecl(s, state);
-    } else if (s.match({ word: "rule" })) {
-        return parseRuleDecl(s, state);
-    } else if (s.match({ word: "expression" })) {
-        return parseExpressionDecl(s, state);
+    if (s.match({ kind: "Parser" })) {
+        return parseParserBlock(s, state);
+    } else if (s.match({ kind: "Lexer" })) {
+        return parseLexerBlock(s, state);
     } else {
         s.throwSyntaxError("unexpected token");
     }
 }
 
 
-export type A_ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
+export type A_ParserBlock = { kind: "ParserBlock"; };
 
-function parseConfigDecl(s: Lexer, state: ParseState): A_ConfigDecl {
+function parseParserBlock(s: Lexer, state: ParseState): A_ParserBlock {
     s.forward();
 
-    s.expect({ kind: "Word" });
-    const key = s.getValue();
+    s.expect({ kind: "Ident" });
+    const name = s.getValue();
     s.forward();
 
-    s.expect({ kind: "Word" });
-    const value = s.getValue();
+    s.forwardWithExpect({ kind: "OpenBracket" });
+
+    // TODO
+
+    s.forwardWithExpect({ kind: "CloseBracket" });
+
+    return { kind: "ParserBlock" };
+}
+
+
+export type A_LexerBlock = { kind: "LexerBlock"; };
+
+function parseLexerBlock(s: Lexer, state: ParseState): A_LexerBlock {
     s.forward();
 
-    return { kind: "ConfigDecl", key, value };
+    s.expect({ kind: "Ident" });
+    const name = s.getValue();
+    s.forward();
+
+    s.forwardWithExpect({ kind: "OpenBracket" });
+
+    // TODO
+
+    s.forwardWithExpect({ kind: "CloseBracket" });
+
+    return { kind: "LexerBlock" };
 }
 
 
@@ -57,14 +76,14 @@ export type A_RuleDecl = { kind: "RuleDecl"; name: string; children: string };
 function parseRuleDecl(s: Lexer, state: ParseState): A_RuleDecl {
     s.forward();
 
-    s.expect({ kind: "Word" });
+    s.expect({ kind: "Ident" });
     const name = s.getValue();
     s.forward();
 
     s.forwardWithExpect({ kind: "Equal" });
 
     let children: string | undefined;
-    if (s.match({ kind: "Word" })) {
+    if (s.match({ kind: "Ident" })) {
         children = parseIdent(s, state);
     } else {
         s.throwSyntaxError("unexpected token");
@@ -79,14 +98,14 @@ export type A_ExpressionDecl = { kind: "ExpressionDecl"; name: string; children:
 function parseExpressionDecl(s: Lexer, state: ParseState): A_ExpressionDecl {
     s.forward();
 
-    s.expect({ kind: "Word" });
+    s.expect({ kind: "Ident" });
     const name = s.getValue();
     s.forward();
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
     const children: (A_OperatorLevel | A_ExprItem)[] = [];
-    while (s.match({ word: "atom" }) || s.match({ word: "level" })) {
+    while (s.match({ kind: "atom" }) || s.match({ kind: "level" })) {
         children.push(parseExpressionDecl_0(s, state));
     }
 
@@ -96,9 +115,9 @@ function parseExpressionDecl(s: Lexer, state: ParseState): A_ExpressionDecl {
 }
 
 function parseExpressionDecl_0(s: Lexer, state: ParseState): A_OperatorLevel | A_ExprItem {
-    if (s.match({ word: "atom" })) {
+    if (s.match({ kind: "atom" })) {
         return parseExprItem(s, state);
-    } else if (s.match({ word: "level" })) {
+    } else if (s.match({ kind: "level" })) {
         return parseOperatorLevel(s, state);
     } else {
         s.throwSyntaxError("unexpected token");
@@ -112,7 +131,7 @@ function parseExprItem(s: Lexer, state: ParseState): A_ExprItem {
     s.forward();
 
     let name: string;
-    if (s.match({ kind: "Word" })) {
+    if (s.match({ kind: "Ident" })) {
         name = parseIdent(s, state);
     } else {
         s.throwSyntaxError("unexpected token");
@@ -130,7 +149,7 @@ function parseOperatorLevel(s: Lexer, state: ParseState): A_OperatorLevel {
     s.forwardWithExpect({ kind: "OpenBracket" });
 
     let children: A_OperatorItem[] = [];
-    while (s.match({ word: "prefix" }) || s.match({ word: "infix" }) || s.match({ word: "postfix" })) {
+    while (s.match({ kind: "Prefix" }) || s.match({ kind: "Infix" }) || s.match({ kind: "Postfix" })) {
         children.push(parseOperatorItem(s, state));
     }
 
@@ -146,9 +165,9 @@ function parseOperatorItem(s: Lexer, state: ParseState): A_OperatorItem {
     const operatorKind = s.getValue();
     s.forward();
 
-    s.forwardWithExpect({ word: "operator" });
+    s.forwardWithExpect({ kind: "Operator" });
 
-    s.expect({ kind: "String" });
+    s.expect({ kind: "Str" });
     let value = s.getValue();
     s.forward();
 
