@@ -94,8 +94,6 @@ export class Lexer {
         const current = this.getToken(offset);
         if (token.kind != null) {
             return current.kind === token.kind;
-        } else if (token.word != null) {
-            return current.kind === "Word" && current.value === token.word;
         } else {
             return current.kind === token.token.kind && current.value === token.token.value;
         }
@@ -136,75 +134,133 @@ export class Lexer {
 
     private readToken(): Token {
         const input = this.input;
-
-        // スペース用のキューにスペースをすべて読む
         const spaces: string[] = [];
-        while (!this.input.eof()) {
-            if ("\r\n" === input.getChar(2)) {
-                spaces.push("\r\n");
-                input.nextChar(2);
-            } else if (["\r", "\n"].includes(input.getChar())) {
-                spaces.push(input.getChar());
-                input.nextChar();
-            } else if ([" ", "\t"].includes(input.getChar())) {
-                spaces.push(input.getChar());
-                input.nextChar();
-            } else {
-                break;
-            }
-        }
 
-        if (input.eof()) {
-            return TOKEN("EOF");
-        } else {
-            let char = input.getChar();
-            if (char === "=") {
-                input.nextChar();
-                return TOKEN("Equal");
-            } else if (char === "|") {
-                input.nextChar();
-                return TOKEN("Pipe");
-            } else if (char === "*") {
-                input.nextChar();
-                return TOKEN("Asterisk");
-            } else if (char === "+") {
-                input.nextChar();
-                return TOKEN("Plus");
-            } else if (char === "!") {
-                input.nextChar();
-                return TOKEN("Exclam");
-            } else if (char === "?") {
-                input.nextChar();
-                return TOKEN("Question");
-            } else if (char === "{") {
-                input.nextChar();
-                return TOKEN("OpenBracket");
-            } else if (char === "}") {
-                input.nextChar();
-                return TOKEN("CloseBracket");
-            } else if (/^[a-z0-9]$/i.test(char)) {
-                let buf = "";
-                buf += char;
-                input.nextChar();
-                while (!input.eof() && /^[a-z0-9]$/i.test(input.getChar())) {
-                    buf += input.getChar();
-                    input.nextChar();
-                }
-                return TOKEN("Word", { value: buf });
-            } else if (char === "\"") {
-                let buf = "";
-                input.nextChar();
-                while (!input.eof()) {
-                    if (input.getChar() === "\"") break;
-                    buf += input.getChar();
-                    input.nextChar();
-                }
-                if (!input.eof()) {
-                    input.nextChar();
-                }
-                return TOKEN("String", { value: buf });
+        while (true) {
+            if (input.eof()) {
+                return TOKEN("EOF");
             } else {
-                this.throwSyntaxError(`unexpected char '${char}'`);
+                let char = input.getChar();
+                let char2 = input.getChar(2);
+                let char5 = input.getChar(5);
+                let char6 = input.getChar(6);
+                let char7 = input.getChar(7);
+                let char8 = input.getChar(8);
+                let char10 = input.getChar(10);
+                if (char2 === "\r\n") {
+                    input.nextChar(2);
+                    spaces.push(char2);
+                    continue;
+                } else if (["\r", "\n"].includes(char)) {
+                    input.nextChar();
+                    spaces.push(char);
+                    continue;
+                } else if ([" ", "\t"].includes(char)) {
+                    input.nextChar();
+                    spaces.push(char);
+                    continue;
+                } else if (char === "*") {
+                    input.nextChar();
+                    return TOKEN("Aste");
+                } else if (char === "+") {
+                    input.nextChar();
+                    return TOKEN("Plus");
+                } else if (char === "!") {
+                    input.nextChar();
+                    return TOKEN("Excl");
+                } else if (char === "&") {
+                    input.nextChar();
+                    return TOKEN("Amp");
+                } else if (char === "?") {
+                    input.nextChar();
+                    return TOKEN("Ques");
+                } else if (char === "/") {
+                    input.nextChar();
+                    return TOKEN("Slash");
+                } else if (char === ".") {
+                    input.nextChar();
+                    return TOKEN("Dot");
+                } else if (char === "$") {
+                    input.nextChar();
+                    return TOKEN("Dollar");
+                } else if (char2 === "=>") {
+                    input.nextChar(2);
+                    return TOKEN("Arrow");
+                } else if (char === "=") {
+                    input.nextChar();
+                    return TOKEN("Equal");
+                } else if (char === ";") {
+                    input.nextChar();
+                    return TOKEN("Semi");
+                } else if (char === "{") {
+                    input.nextChar();
+                    return TOKEN("OpenBracket");
+                } else if (char === "}") {
+                    input.nextChar();
+                    return TOKEN("CloseBracket");
+                } else if (char === "(") {
+                    input.nextChar();
+                    return TOKEN("OpenParen");
+                } else if (char === ")") {
+                    input.nextChar();
+                    return TOKEN("CloseParen");
+                } else if (char6 === "parser") {
+                    input.nextChar(6);
+                    return TOKEN("Parser");
+                } else if (char5 === "lexer") {
+                    input.nextChar(5);
+                    return TOKEN("Lexer");
+                } else if (char7 === "ignored") {
+                    input.nextChar(7);
+                    return TOKEN("Ignored");
+                } else if (char5 === "token") {
+                    input.nextChar(5);
+                    return TOKEN("Token");
+                } else if (char10 === "expression") {
+                    input.nextChar(10);
+                    return TOKEN("Expression");
+                } else if (char6 === "prefix") {
+                    input.nextChar(6);
+                    return TOKEN("Prefix");
+                } else if (char5 === "infix") {
+                    input.nextChar(5);
+                    return TOKEN("Infix");
+                } else if (char7 === "postfix") {
+                    input.nextChar(7);
+                    return TOKEN("Postfix");
+                } else if (char8 === "operator") {
+                    input.nextChar(8);
+                    return TOKEN("Operator");
+                } else if (char5 === "group") {
+                    input.nextChar(5);
+                    return TOKEN("Group");
+                } else if (char === "\"") {
+                    let buf = "";
+                    input.nextChar();
+                    while (!input.eof()) {
+                        if (input.getChar() === "\"") break;
+                        buf += input.getChar();
+                        input.nextChar();
+                    }
+                    if (!input.eof()) {
+                        input.nextChar();
+                    }
+                    return TOKEN("Str", { value: buf });
+                } else if (/^[a-z0-9]$/i.test(char)) {
+                    let buf = "";
+                    buf += char;
+                    input.nextChar();
+                    while (!input.eof() && /^[a-z0-9]$/i.test(input.getChar())) {
+                        buf += input.getChar();
+                        input.nextChar();
+                    }
+                    return TOKEN("Ident", { value: buf });
+                } else if (char === "[") {
+                    // TODO: CharRange
+                    this.throwSyntaxError(`unexpected char '${char}'`);
+                } else {
+                    this.throwSyntaxError(`unexpected char '${char}'`);
+                }
             }
         }
     }
@@ -225,20 +281,14 @@ export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: 
     };
 }
 
-export type TokenKind = "EOF" | "Equal" | "Pipe" | "Asterisk" | "Plus" | "Exclam" | "Question" | "OpenBracket" | "CloseBracket" | "Word" | "String";
+export type TokenKind = "EOF" | "Aste" | "Plus" | "Excl" | "Amp" | "Ques" | "Slash" | "Dot" | "Dollar" | "Arrow" | "Equal" | "Semi" | "OpenBracket" | "CloseBracket" | "OpenParen" | "CloseParen" | "Parser" | "Lexer" | "Ignored" | "Token" | "Expression" | "Prefix" | "Infix" | "Postfix" | "Operator" | "Group" | "Str" | "CharRange" | "Ident";
 
 export type TokenSpecifier = {
     kind: TokenKind;
-    word?: undefined;
-    token?: undefined;
-} | {
-    word: string;
-    kind?: undefined;
     token?: undefined;
 } | {
     token: Token;
     kind?: undefined;
-    word?: undefined;
 };
 
 export function getTokenString(specifier: TokenSpecifier): string {
@@ -246,22 +296,36 @@ export function getTokenString(specifier: TokenSpecifier): string {
     let value: string | undefined;
     if (specifier.kind != null) {
         kind = specifier.kind;
-    } else if (specifier.word != null) {
-        kind = "Word";
-        value = specifier.word;
     } else {
         kind = specifier.token.kind;
         value = specifier.token.value;
     }
-    if (kind === "Equal") return "`=`";
-    if (kind === "Pipe") return "`|`";
-    if (kind === "Asterisk") return "`*`";
+    if (kind === "Aste") return "`*`";
     if (kind === "Plus") return "`+`";
-    if (kind === "Exclam") return "`!`";
-    if (kind === "Question") return "`?`";
+    if (kind === "Excl") return "`!`";
+    if (kind === "Amp") return "`&`";
+    if (kind === "Ques") return "`?`";
+    if (kind === "Slash") return "`/`";
+    if (kind === "Dot") return "`.`";
+    if (kind === "Dollar") return "`$`";
+    if (kind === "Arrow") return "`=>`";
+    if (kind === "Equal") return "`=`";
+    if (kind === "Semi") return "`;`";
     if (kind === "OpenBracket") return "`{`";
     if (kind === "CloseBracket") return "`}`";
-    if (kind === "Word" && value != null) return `\`${value}\``;
-    if (kind === "String") return `\`"${value}"\``;
+    if (kind === "OpenParen") return "`(`";
+    if (kind === "CloseParen") return "`)`";
+    if (kind === "Parser") return "`parser`";
+    if (kind === "Lexer") return "`lexer`";
+    if (kind === "Ignored") return "`ignored`";
+    if (kind === "Token") return "`token`";
+    if (kind === "Expression") return "`expression`";
+    if (kind === "Prefix") return "`prefix`";
+    if (kind === "Infix") return "`infix`";
+    if (kind === "Postfix") return "`postfix`";
+    if (kind === "Operator") return "`operator`";
+    if (kind === "Group") return "`group`";
+    if (kind === "Str" && value != null) return `\`"${value}"\``;
+    if (kind === "Ident" && value != null) return `\`"${value}"\``;
     return kind;
 }
