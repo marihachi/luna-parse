@@ -93,6 +93,8 @@ function parseRule(s: Lexer, state: ParseState): A_Rule {
         s.throwSyntaxError("unexpected token");
     }
 
+    s.forwardWithExpect({ kind: "Semi" });
+
     return { kind: "Rule", name, children };
 }
 
@@ -128,6 +130,8 @@ function parseLexerRule(s: Lexer, state: ParseState): A_LexerRule {
     } else {
         s.throwSyntaxError("unexpected token");
     }
+
+    s.forwardWithExpect({ kind: "Semi" });
 
     return { kind: "LexerRule", name, children };
 }
