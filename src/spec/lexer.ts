@@ -281,7 +281,9 @@ export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: 
     };
 }
 
-export type TokenKind = "EOF" | "Aste" | "Plus" | "Excl" | "Amp" | "Ques" | "Slash" | "Dot" | "Dollar" | "Arrow" | "Equal" | "Semi" | "OpenBracket" | "CloseBracket" | "OpenParen" | "CloseParen" | "Parser" | "Lexer" | "Ignored" | "Token" | "Expression" | "Prefix" | "Infix" | "Postfix" | "Operator" | "Group" | "Str" | "CharRange" | "Ident";
+export type TokenKind = "EOF" | "Aste" | "Plus" | "Excl" | "Amp" | "Ques" | "Slash" | "Dot" | "Dollar" | "Arrow" |
+    "Equal" | "Semi" | "OpenBracket" | "CloseBracket" | "OpenParen" | "CloseParen" | "Parser" | "Lexer" | "Ignored" |
+    "Token" | "Expression" | "Prefix" | "Infix" | "Postfix" | "Operator" | "Group" | "Str" | "CharRange" | "Ident";
 
 export type TokenSpecifier = {
     kind: TokenKind;
