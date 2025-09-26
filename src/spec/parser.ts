@@ -1,12 +1,12 @@
 // 構文解析 トークン列をASTに変換する
 
-import { Scan, TokenKind } from "./scan.js";
+import { Lexer, TokenKind } from "./lexer.js";
 
 export type ParseState = {
 };
 
 export function parse(source: string): A_Toplevel[] {
-    const s = new Scan(source);
+    const s = new Lexer(source);
     const state: ParseState = {};
 
     const children: A_Toplevel[] = [];
@@ -22,7 +22,7 @@ export function parse(source: string): A_Toplevel[] {
 
 export type A_Toplevel = A_ConfigDecl | A_RuleDecl | A_ExpressionDecl;
 
-function parseToplevel(s: Scan, state: ParseState): A_Toplevel {
+function parseToplevel(s: Lexer, state: ParseState): A_Toplevel {
     if (s.match({ word: "config" })) {
         return parseConfigDecl(s, state);
     } else if (s.match({ word: "rule" })) {
@@ -37,7 +37,7 @@ function parseToplevel(s: Scan, state: ParseState): A_Toplevel {
 
 export type A_ConfigDecl = { kind: "ConfigDecl"; key: string; value: string; };
 
-function parseConfigDecl(s: Scan, state: ParseState): A_ConfigDecl {
+function parseConfigDecl(s: Lexer, state: ParseState): A_ConfigDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
@@ -54,7 +54,7 @@ function parseConfigDecl(s: Scan, state: ParseState): A_ConfigDecl {
 
 export type A_RuleDecl = { kind: "RuleDecl"; name: string; children: string };
 
-function parseRuleDecl(s: Scan, state: ParseState): A_RuleDecl {
+function parseRuleDecl(s: Lexer, state: ParseState): A_RuleDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
@@ -76,7 +76,7 @@ function parseRuleDecl(s: Scan, state: ParseState): A_RuleDecl {
 
 export type A_ExpressionDecl = { kind: "ExpressionDecl"; name: string; children: (A_OperatorLevel | A_ExprItem)[]; };
 
-function parseExpressionDecl(s: Scan, state: ParseState): A_ExpressionDecl {
+function parseExpressionDecl(s: Lexer, state: ParseState): A_ExpressionDecl {
     s.forward();
 
     s.expect({ kind: "Word" });
@@ -95,7 +95,7 @@ function parseExpressionDecl(s: Scan, state: ParseState): A_ExpressionDecl {
     return { kind: "ExpressionDecl", name, children };
 }
 
-function parseExpressionDecl_0(s: Scan, state: ParseState): A_OperatorLevel | A_ExprItem {
+function parseExpressionDecl_0(s: Lexer, state: ParseState): A_OperatorLevel | A_ExprItem {
     if (s.match({ word: "atom" })) {
         return parseExprItem(s, state);
     } else if (s.match({ word: "level" })) {
@@ -108,7 +108,7 @@ function parseExpressionDecl_0(s: Scan, state: ParseState): A_OperatorLevel | A_
 
 export type A_ExprItem = { kind: "ExprItem"; name: string; };
 
-function parseExprItem(s: Scan, state: ParseState): A_ExprItem {
+function parseExprItem(s: Lexer, state: ParseState): A_ExprItem {
     s.forward();
 
     let name: string;
@@ -124,7 +124,7 @@ function parseExprItem(s: Scan, state: ParseState): A_ExprItem {
 
 export type A_OperatorLevel = { kind: "OperatorLevel"; children: A_OperatorItem[]; };
 
-function parseOperatorLevel(s: Scan, state: ParseState): A_OperatorLevel {
+function parseOperatorLevel(s: Lexer, state: ParseState): A_OperatorLevel {
     s.forward();
 
     s.forwardWithExpect({ kind: "OpenBracket" });
@@ -142,7 +142,7 @@ function parseOperatorLevel(s: Scan, state: ParseState): A_OperatorLevel {
 
 export type A_OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
 
-function parseOperatorItem(s: Scan, state: ParseState): A_OperatorItem {
+function parseOperatorItem(s: Lexer, state: ParseState): A_OperatorItem {
     const operatorKind = s.getValue();
     s.forward();
 
@@ -163,14 +163,14 @@ export type A_Sequence = {};
 export type A_Alternate = {};
 // TODO
 
-function parseIdent(s: Scan, state: ParseState): string {
+function parseIdent(s: Lexer, state: ParseState): string {
     const name = s.getValue();
     s.forward();
 
     return name;
 }
 
-function parseExpr(s: Scan, state: ParseState): A_Expr {
+function parseExpr(s: Lexer, state: ParseState): A_Expr {
     return parseExprBp(s, state, 0);
 }
 
@@ -190,7 +190,7 @@ const operators: AnyOperator[] = [
 // 例えば、InfixOperatorではlbpを大きくすると右結合、rbpを大きくすると左結合の演算子になります。
 // 詳細はpratt parsingの説明ページを参照してください。
 
-function parseExprBp(s: Scan, state: ParseState, minBp: number): A_Expr {
+function parseExprBp(s: Lexer, state: ParseState, minBp: number): A_Expr {
     let expr: A_Expr;
     const tokenKind = s.getToken().kind;
     const prefix = operators.find((x): x is PrefixOperator => x.kind === "PrefixOperator" && x.tokenKind === tokenKind);
@@ -222,18 +222,18 @@ function parseExprBp(s: Scan, state: ParseState, minBp: number): A_Expr {
     return expr;
 }
 
-function handlePrefixOperator(s: Scan, state: ParseState, minBp: number): A_Expr {
+function handlePrefixOperator(s: Lexer, state: ParseState, minBp: number): A_Expr {
     s.throwSyntaxError("not implemented");
 }
 
-function handleInfixOperator(s: Scan, state: ParseState, left: A_Expr, minBp: number): A_Expr {
+function handleInfixOperator(s: Lexer, state: ParseState, left: A_Expr, minBp: number): A_Expr {
     s.throwSyntaxError("not implemented");
 }
 
-function handlePostfixOperator(s: Scan, state: ParseState, expr: A_Expr): A_Expr {
+function handlePostfixOperator(s: Lexer, state: ParseState, expr: A_Expr): A_Expr {
     s.throwSyntaxError("not implemented");
 }
 
-function handleAtom(s: Scan, state: ParseState): A_Expr {
+function handleAtom(s: Lexer, state: ParseState): A_Expr {
     s.throwSyntaxError("not implemented");
 }

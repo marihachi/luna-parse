@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parse } from "./spec/parse.js";
+import { parse } from "./spec/parser.js";
 
 // load
 const resolvedPath = path.resolve("./debug/debug.spec");

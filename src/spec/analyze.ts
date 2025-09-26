@@ -1,6 +1,6 @@
 // 意味解析 ASTをIR Treeに変換する
 
-import { A_Toplevel } from "./parse.js";
+import { A_Toplevel } from "./parser.js";
 
 export type LoweringState = {};
 

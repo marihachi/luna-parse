@@ -1,5 +1,5 @@
 import { emit } from "./emit.js";
-import { parse } from "./parse.js";
+import { parse } from "./parser.js";
 import { analyze } from "./analyze.js";
 
 export function generateCode(specFile: string): string {

@@ -50,7 +50,7 @@ export class Input {
     }
 }
 
-export class Scan {
+export class Lexer {
     private input: Input;
 
     // tokens[0]には現在のトークンを格納
