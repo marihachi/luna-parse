@@ -17,7 +17,8 @@ parser SpecParser {
     lexerExpr3 = lexerExpr4 (Asta / Plus / Ques)?;
     lexerExpr4 = (Amp / Excl)? lexerAtom;
     lexerAtom = OpenParen lexerExpr1 CloseParen / Dot / Dollar / Str / CharRange / Ident;
-    expressionBlock = Expression OpenBracket operatorGroup* CloseBracket;
+    expressionBlock = Expression OpenBracket (exprAtom / operatorGroup)* CloseBracket;
+    exprAtom = Atom atom;
     operatorGroup = Operator Group OpenBracket operatorRule* CloseBracket;
     operatorRule = (Prefix / Infix / Postfix) Operator Ident;
 }
@@ -45,6 +46,7 @@ lexer SpecLexer {
     token Ignored = "ignored";
     token Token = "token";
     token Expression = "expression";
+    token Atom = "atom";
     token Prefix = "prefix";
     token Infix = "infix";
     token Postfix = "postfix";

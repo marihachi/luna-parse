@@ -146,6 +146,7 @@ export class Lexer {
             } else {
                 let char = input.getChar();
                 let char2 = input.getChar(2);
+                let char4 = input.getChar(4);
                 let char5 = input.getChar(5);
                 let char6 = input.getChar(6);
                 let char7 = input.getChar(7);
@@ -223,6 +224,9 @@ export class Lexer {
                 } else if (char10 === "expression") {
                     input.nextChar(10);
                     return TOKEN("Expression");
+                } else if (char4 === "atom") {
+                    input.nextChar(4);
+                    return TOKEN("Atom");
                 } else if (char6 === "prefix") {
                     input.nextChar(6);
                     return TOKEN("Prefix");
@@ -287,7 +291,7 @@ export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: 
 
 export type TokenKind = "EOF" | "Aste" | "Plus" | "Excl" | "Amp" | "Ques" | "Slash" | "Dot" | "Dollar" | "Arrow" |
     "Equal" | "Semi" | "OpenBracket" | "CloseBracket" | "OpenParen" | "CloseParen" | "Parser" | "Lexer" | "Ignored" |
-    "Token" | "Expression" | "Prefix" | "Infix" | "Postfix" | "Operator" | "Group" | "Str" | "CharRange" | "Ident";
+    "Token" | "Expression" | "Atom" | "Prefix" | "Infix" | "Postfix" | "Operator" | "Group" | "Str" | "CharRange" | "Ident";
 
 export type TokenSpecifier = {
     kind: TokenKind;
@@ -326,6 +330,7 @@ export function getTokenString(specifier: TokenSpecifier): string {
     if (kind === "Ignored") return "`ignored`";
     if (kind === "Token") return "`token`";
     if (kind === "Expression") return "`expression`";
+    if (kind === "Atom") return "`atom`";
     if (kind === "Prefix") return "`prefix`";
     if (kind === "Infix") return "`infix`";
     if (kind === "Postfix") return "`postfix`";

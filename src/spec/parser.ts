@@ -44,7 +44,10 @@ function parseParserBlock(s: Lexer, state: ParseState): A_ParserBlock {
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
-    // TODO
+    const children: A_Rule[] = [];
+    while (s.match({ kind: "Ident" })) {
+        children.push(parseRule(s, state));
+    }
 
     s.forwardWithExpect({ kind: "CloseBracket" });
 
@@ -63,7 +66,10 @@ function parseLexerBlock(s: Lexer, state: ParseState): A_LexerBlock {
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
-    // TODO
+    const children: A_LexerRule[] = [];
+    while (s.match({ kind: "Ident" }) || s.match({ kind: "Token" }) || s.match({ kind: "Ignored" })) {
+        children.push(parseLexerRule(s, state));
+    }
 
     s.forwardWithExpect({ kind: "CloseBracket" });
 
@@ -71,11 +77,9 @@ function parseLexerBlock(s: Lexer, state: ParseState): A_LexerBlock {
 }
 
 
-export type A_RuleDecl = { kind: "RuleDecl"; name: string; children: string };
+export type A_Rule = { kind: "Rule"; name: string; children: string };
 
-function parseRuleDecl(s: Lexer, state: ParseState): A_RuleDecl {
-    s.forward();
-
+function parseRule(s: Lexer, state: ParseState): A_Rule {
     s.expect({ kind: "Ident" });
     const name = s.getValue();
     s.forward();
@@ -89,7 +93,43 @@ function parseRuleDecl(s: Lexer, state: ParseState): A_RuleDecl {
         s.throwSyntaxError("unexpected token");
     }
 
-    return { kind: "RuleDecl", name, children };
+    return { kind: "Rule", name, children };
+}
+
+
+export type A_LexerRule = { kind: "LexerRule"; name: string; children: string };
+
+function parseLexerRule(s: Lexer, state: ParseState): A_LexerRule {
+    let ruleAttr: "none" | "token" | "ignoredToken" = "none";
+    if (s.match({ kind: "Token" })) {
+        s.forward();
+        ruleAttr = "token";
+    }
+    if (s.match({ kind: "Token" }, 1)) {
+        if (s.match({ kind: "Ignored" })) {
+            s.forward();
+            s.forward();
+            ruleAttr = "ignoredToken";
+        } else {
+            s.throwSyntaxError("unexpected token");
+        }
+    }
+
+    s.expect({ kind: "Ident" });
+    const name = s.getValue();
+    s.forward();
+
+    s.forwardWithExpect({ kind: "Equal" });
+
+    // TODO
+    let children: string | undefined;
+    if (s.match({ kind: "Ident" })) {
+        children = parseIdent(s, state);
+    } else {
+        s.throwSyntaxError("unexpected token");
+    }
+
+    return { kind: "LexerRule", name, children };
 }
 
 
@@ -105,7 +145,7 @@ function parseExpressionDecl(s: Lexer, state: ParseState): A_ExpressionDecl {
     s.forwardWithExpect({ kind: "OpenBracket" });
 
     const children: (A_OperatorLevel | A_ExprItem)[] = [];
-    while (s.match({ kind: "atom" }) || s.match({ kind: "level" })) {
+    while (s.match({ kind: "Atom" }) || s.match({ kind: "Operator" })) {
         children.push(parseExpressionDecl_0(s, state));
     }
 
@@ -115,9 +155,9 @@ function parseExpressionDecl(s: Lexer, state: ParseState): A_ExpressionDecl {
 }
 
 function parseExpressionDecl_0(s: Lexer, state: ParseState): A_OperatorLevel | A_ExprItem {
-    if (s.match({ kind: "atom" })) {
+    if (s.match({ kind: "Atom" })) {
         return parseExprItem(s, state);
-    } else if (s.match({ kind: "level" })) {
+    } else if (s.match({ kind: "Operator" })) {
         return parseOperatorLevel(s, state);
     } else {
         s.throwSyntaxError("unexpected token");
@@ -145,6 +185,8 @@ export type A_OperatorLevel = { kind: "OperatorLevel"; children: A_OperatorItem[
 
 function parseOperatorLevel(s: Lexer, state: ParseState): A_OperatorLevel {
     s.forward();
+
+    s.forwardWithExpect({ kind: "Group" });
 
     s.forwardWithExpect({ kind: "OpenBracket" });
 
