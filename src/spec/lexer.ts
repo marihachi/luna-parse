@@ -53,7 +53,7 @@ export class Input {
 }
 
 export class Lexer {
-    private input: Input;
+    input: Input;
 
     // tokens[0]には現在のトークンを格納
     // tokens[1]以降には先読み済みのトークンを格納
@@ -139,7 +139,7 @@ export class Lexer {
 
         while (true) {
             if (input.eof()) {
-                return TOKEN("EOF");
+                return CreateToken(TOKEN.EOF);
             } else {
                 let char = input.getChar();
                 let char2 = input.getChar(2);
@@ -163,82 +163,82 @@ export class Lexer {
                     continue;
                 } else if (char === "*") {
                     input.nextChar();
-                    return TOKEN("Aste");
+                    return CreateToken(TOKEN.Aste);
                 } else if (char === "+") {
                     input.nextChar();
-                    return TOKEN("Plus");
+                    return CreateToken(TOKEN.Plus);
                 } else if (char === "!") {
                     input.nextChar();
-                    return TOKEN("Excl");
+                    return CreateToken(TOKEN.Excl);
                 } else if (char === "&") {
                     input.nextChar();
-                    return TOKEN("Amp");
+                    return CreateToken(TOKEN.Amp);
                 } else if (char === "?") {
                     input.nextChar();
-                    return TOKEN("Ques");
+                    return CreateToken(TOKEN.Ques);
                 } else if (char === "/") {
                     input.nextChar();
-                    return TOKEN("Slash");
+                    return CreateToken(TOKEN.Slash);
                 } else if (char === ".") {
                     input.nextChar();
-                    return TOKEN("Dot");
+                    return CreateToken(TOKEN.Dot);
                 } else if (char === "$") {
                     input.nextChar();
-                    return TOKEN("Dollar");
+                    return CreateToken(TOKEN.Dollar);
                 } else if (char2 === "=>") {
                     input.nextChar(2);
-                    return TOKEN("Arrow");
+                    return CreateToken(TOKEN.Arrow);
                 } else if (char === "=") {
                     input.nextChar();
-                    return TOKEN("Equal");
+                    return CreateToken(TOKEN.Equal);
                 } else if (char === ";") {
                     input.nextChar();
-                    return TOKEN("Semi");
+                    return CreateToken(TOKEN.Semi);
                 } else if (char === "{") {
                     input.nextChar();
-                    return TOKEN("OpenBracket");
+                    return CreateToken(TOKEN.OpenBracket);
                 } else if (char === "}") {
                     input.nextChar();
-                    return TOKEN("CloseBracket");
+                    return CreateToken(TOKEN.CloseBracket);
                 } else if (char === "(") {
                     input.nextChar();
-                    return TOKEN("OpenParen");
+                    return CreateToken(TOKEN.OpenParen);
                 } else if (char === ")") {
                     input.nextChar();
-                    return TOKEN("CloseParen");
+                    return CreateToken(TOKEN.CloseParen);
                 } else if (char6 === "parser") {
                     input.nextChar(6);
-                    return TOKEN("Parser");
+                    return CreateToken(TOKEN.Parser);
                 } else if (char5 === "lexer") {
                     input.nextChar(5);
-                    return TOKEN("Lexer");
+                    return CreateToken(TOKEN.Lexer);
                 } else if (char7 === "ignored") {
                     input.nextChar(7);
-                    return TOKEN("Ignored");
+                    return CreateToken(TOKEN.Ignored);
                 } else if (char5 === "token") {
                     input.nextChar(5);
-                    return TOKEN("Token");
+                    return CreateToken(TOKEN.Token);
                 } else if (char10 === "expression") {
                     input.nextChar(10);
-                    return TOKEN("Expression");
+                    return CreateToken(TOKEN.Expression);
                 } else if (char4 === "atom") {
                     input.nextChar(4);
-                    return TOKEN("Atom");
+                    return CreateToken(TOKEN.Atom);
                 } else if (char6 === "prefix") {
                     input.nextChar(6);
-                    return TOKEN("Prefix");
+                    return CreateToken(TOKEN.Prefix);
                 } else if (char5 === "infix") {
                     input.nextChar(5);
-                    return TOKEN("Infix");
+                    return CreateToken(TOKEN.Infix);
                 } else if (char7 === "postfix") {
                     input.nextChar(7);
-                    return TOKEN("Postfix");
+                    return CreateToken(TOKEN.Postfix);
                 } else if (char8 === "operator") {
                     input.nextChar(8);
-                    return TOKEN("Operator");
+                    return CreateToken(TOKEN.Operator);
                 } else if (char5 === "group") {
                     input.nextChar(5);
-                    return TOKEN("Group");
+                    return CreateToken(TOKEN.Group);
                 } else if (char === "\"") {
                     let buf = "";
                     input.nextChar();
@@ -250,7 +250,7 @@ export class Lexer {
                     if (!input.eof()) {
                         input.nextChar();
                     }
-                    return TOKEN("Str", { value: buf });
+                    return CreateToken(TOKEN.Str, { value: buf });
                 } else if (/^[a-z0-9]$/i.test(char)) {
                     let buf = "";
                     buf += char;
@@ -259,7 +259,7 @@ export class Lexer {
                         buf += input.getChar();
                         input.nextChar();
                     }
-                    return TOKEN("Ident", { value: buf });
+                    return CreateToken(TOKEN.Ident, { value: buf });
                 } else if (char === "[") {
                     // TODO: CharRange
                     this.throwSyntaxError(`unexpected char '${char}'`);
@@ -277,7 +277,7 @@ export type Token = {
     value?: string;
 };
 
-export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: string; }): Token {
+export function CreateToken(kind: TokenKind, opts?: { value?: string; leadingTrivia?: string; }): Token {
     opts = opts || {};
     return {
         kind,
@@ -286,9 +286,16 @@ export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: 
     };
 }
 
-export type TokenKind = "EOF" | "Aste" | "Plus" | "Excl" | "Amp" | "Ques" | "Slash" | "Dot" | "Dollar" | "Arrow" |
-    "Equal" | "Semi" | "OpenBracket" | "CloseBracket" | "OpenParen" | "CloseParen" | "Parser" | "Lexer" | "Ignored" |
-    "Token" | "Expression" | "Atom" | "Prefix" | "Infix" | "Postfix" | "Operator" | "Group" | "Str" | "CharRange" | "Ident";
+export const TOKEN = {
+    EOF: 0, Aste: 1, Plus: 2, Excl: 3, Amp: 4, Ques: 5, Slash: 6, Dot: 7, Dollar: 8, Arrow: 9,
+    Equal: 10, Semi: 11, OpenBracket: 12, CloseBracket: 13, OpenParen: 14, CloseParen: 15, Parser: 16, Lexer: 17, Ignored: 18, Token: 19,
+    Expression: 20, Atom: 21, Prefix: 22, Infix: 23, Postfix: 24, Operator: 25, Group: 26, Str: 27, CharRange: 28, Ident: 29
+} as const;
+export type TokenKind = typeof TOKEN extends Record<string, infer V> ? V : never;
+
+// export type TokenKind = "EOF" | "Aste" | "Plus" | "Excl" | "Amp" | "Ques" | "Slash" | "Dot" | "Dollar" | "Arrow" |
+//     "Equal" | "Semi" | "OpenBracket" | "CloseBracket" | "OpenParen" | "CloseParen" | "Parser" | "Lexer" | "Ignored" |
+//     "Token" | "Expression" | "Atom" | "Prefix" | "Infix" | "Postfix" | "Operator" | "Group" | "Str" | "CharRange" | "Ident";
 
 export type TokenSpecifier = {
     kind: TokenKind;
@@ -307,33 +314,38 @@ export function getTokenString(specifier: TokenSpecifier): string {
         kind = specifier.token.kind;
         value = specifier.token.value;
     }
-    if (kind === "Aste") return "`*`";
-    if (kind === "Plus") return "`+`";
-    if (kind === "Excl") return "`!`";
-    if (kind === "Amp") return "`&`";
-    if (kind === "Ques") return "`?`";
-    if (kind === "Slash") return "`/`";
-    if (kind === "Dot") return "`.`";
-    if (kind === "Dollar") return "`$`";
-    if (kind === "Arrow") return "`=>`";
-    if (kind === "Equal") return "`=`";
-    if (kind === "Semi") return "`;`";
-    if (kind === "OpenBracket") return "`{`";
-    if (kind === "CloseBracket") return "`}`";
-    if (kind === "OpenParen") return "`(`";
-    if (kind === "CloseParen") return "`)`";
-    if (kind === "Parser") return "`parser`";
-    if (kind === "Lexer") return "`lexer`";
-    if (kind === "Ignored") return "`ignored`";
-    if (kind === "Token") return "`token`";
-    if (kind === "Expression") return "`expression`";
-    if (kind === "Atom") return "`atom`";
-    if (kind === "Prefix") return "`prefix`";
-    if (kind === "Infix") return "`infix`";
-    if (kind === "Postfix") return "`postfix`";
-    if (kind === "Operator") return "`operator`";
-    if (kind === "Group") return "`group`";
-    if (kind === "Str" && value != null) return `\`"${value}"\``;
-    if (kind === "Ident" && value != null) return `\`${value}\``;
+    if (kind === TOKEN.EOF) return "EOF";
+    if (kind === TOKEN.Aste) return "`*`";
+    if (kind === TOKEN.Plus) return "`+`";
+    if (kind === TOKEN.Excl) return "`!`";
+    if (kind === TOKEN.Amp) return "`&`";
+    if (kind === TOKEN.Ques) return "`?`";
+    if (kind === TOKEN.Slash) return "`/`";
+    if (kind === TOKEN.Dot) return "`.`";
+    if (kind === TOKEN.Dollar) return "`$`";
+    if (kind === TOKEN.Arrow) return "`=>`";
+    if (kind === TOKEN.Equal) return "`=`";
+    if (kind === TOKEN.Semi) return "`;`";
+    if (kind === TOKEN.OpenBracket) return "`{`";
+    if (kind === TOKEN.CloseBracket) return "`}`";
+    if (kind === TOKEN.OpenParen) return "`(`";
+    if (kind === TOKEN.CloseParen) return "`)`";
+    if (kind === TOKEN.Parser) return "`parser`";
+    if (kind === TOKEN.Lexer) return "`lexer`";
+    if (kind === TOKEN.Ignored) return "`ignored`";
+    if (kind === TOKEN.Token) return "`token`";
+    if (kind === TOKEN.Expression) return "`expression`";
+    if (kind === TOKEN.Atom) return "`atom`";
+    if (kind === TOKEN.Prefix) return "`prefix`";
+    if (kind === TOKEN.Infix) return "`infix`";
+    if (kind === TOKEN.Postfix) return "`postfix`";
+    if (kind === TOKEN.Operator) return "`operator`";
+    if (kind === TOKEN.Group) return "`group`";
+    if (kind === TOKEN.Str && value != null) return `\`"${value}"\``;
+    if (kind === TOKEN.CharRange && value != null) return `[${value}]`;
+    if (kind === TOKEN.Ident && value != null) return `\`${value}\``;
+    if (kind === TOKEN.Str) return `Str`;
+    if (kind === TOKEN.CharRange) return `CharRange`;
+    if (kind === TOKEN.Ident) return `Ident`;
     return kind;
 }
