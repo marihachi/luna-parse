@@ -2,6 +2,8 @@
 
 import { Lexer } from "./lexer.js";
 
+// parser for luna-parse spec
+
 export function parse(source: string): A_Toplevel[] {
     const s = new Lexer(source);
 

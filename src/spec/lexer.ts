@@ -2,6 +2,8 @@
 
 import { Input } from "../lib/input.js";
 
+// lexer for luna-parse spec
+
 export class Lexer {
     private input: Input;
 
