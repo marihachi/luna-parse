@@ -92,13 +92,9 @@ export class Lexer {
     }
 
     /** 現在のトークンが指定した条件を満たしているかどうかを返します。 */
-    match(token: TokenSpecifier, offset: number = 0): boolean {
+    match(kind: TokenKind, offset: number = 0): boolean {
         const current = this.getToken(offset);
-        if (token.kind != null) {
-            return current.kind === token.kind;
-        } else {
-            return current.kind === token.token.kind && current.value === token.token.value;
-        }
+        return current.kind === kind;
     }
 
     /** 次のトークンに進みます。 */
@@ -117,8 +113,8 @@ export class Lexer {
      * 現在のトークンが指定した条件を満たしていることを確認し、条件を満たしていれば次のトークンに進みます。
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
-    forwardWithExpect(token: TokenSpecifier): void {
-        this.expect(token);
+    forwardWithExpect(kind: TokenKind): void {
+        this.expect(kind);
         this.forward();
     }
 
@@ -126,10 +122,9 @@ export class Lexer {
      * 現在のトークンが指定した条件を満たしていることを確認します。
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
-    expect(token: TokenSpecifier, offset: number = 0): void {
-        if (!this.match(token, offset)) {
-            const current: TokenSpecifier = { token: this.getToken(offset) };
-            this.throwSyntaxError(`Expected ${getTokenString(token)}, but got ${getTokenString(current)}`);
+    expect(kind: TokenKind, offset: number = 0): void {
+        if (!this.match(kind, offset)) {
+            this.throwSyntaxError(`Expected ${getTokenString({ kind })}, but got ${getTokenString({ token: this.getToken(offset) })}`);
         }
     }
 
