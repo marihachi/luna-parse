@@ -1,6 +1,6 @@
 // 字句解析 入力文字列をトークン列に変換する
 
-import { Input } from "../lib/input.js";
+import { Input } from "./input.js";
 
 // lexer for luna-parse spec
 
