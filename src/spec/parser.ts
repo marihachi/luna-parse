@@ -71,7 +71,7 @@ function parseRule(p: Lexer): A_Rule {
 }
 
 
-export type A_Expr = A_Sequence | A_Alternate | A_Repeat | A_Option | A_Matched | A_NotMatched | A_ExpressionBlock | A_Ref;
+export type A_Expr = A_Sequence | A_Alternate | A_Repeat | A_Option | A_ExpressionBlock | A_Ref;
 
 export type A_Alternate = { kind: "Alternate"; exprs: A_Expr[]; };
 
@@ -117,7 +117,7 @@ export type A_Repeat = { kind: "Repeat"; minimum: number; expr: A_Expr; };
 export type A_Option = { kind: "Option"; expr: A_Expr; };
 
 function parseExpr3(p: Lexer): A_Expr {
-    const expr = parseExpr4(p);
+    const expr = parseParserAtom(p);
 
     if (p.match(TOKEN.Aste) || p.match(TOKEN.Plus) || p.match(TOKEN.Ques)) {
         return parseExpr3_0(p, expr);
@@ -142,25 +142,7 @@ function parseExpr3_0(p: Lexer, expr: A_Expr): A_Expr {
 }
 
 
-export type A_Matched = { kind: "Matched"; };
-
-export type A_NotMatched = {};
-
-function parseExpr4(p: Lexer): A_Expr {
-    // option
-    if (p.match(TOKEN.Amp) || p.match(TOKEN.Excl)) {
-        // TODO
-    }
-
-    const expr = parseAtom(p);
-
-    return expr;
-}
-
-
-export type A_Ref = { kind: "Ref"; name: string; };
-
-function parseAtom(p: Lexer): A_Expr {
+function parseParserAtom(p: Lexer): A_Expr {
     if (p.match(TOKEN.OpenParen)) {
         p.forward();
         const expr = parseExpr1(p);
@@ -169,16 +151,25 @@ function parseAtom(p: Lexer): A_Expr {
     } else if (p.match(TOKEN.Expression)) {
         return parseExpressionBlock(p);
     } else if (p.match(TOKEN.Ident)) {
-        const name = p.getValue();
-        p.forward();
-        return { kind: "Ref", name } satisfies A_Ref;
+        return parseRef(p);
     } else {
         p.throwSyntaxError("unexpected token");
     }
 }
 
 
-export type A_ExpressionBlock = { kind: "ExpressionBlock"; children: (A_OperatorLevel | A_ExprItem)[]; };
+export type A_Ref = { kind: "Ref"; name: string; };
+
+function parseRef(p: Lexer): A_Expr {
+    // p.expect(TOKEN.Ident);
+    const name = p.getValue();
+    p.forward();
+
+    return { kind: "Ref", name } satisfies A_Ref;
+}
+
+
+export type A_ExpressionBlock = { kind: "ExpressionBlock"; children: (A_OperatorGroup | A_ExprAtom)[]; };
 
 function parseExpressionBlock(p: Lexer): A_ExpressionBlock {
     // p.expect(TOKEN.Expression);
@@ -186,7 +177,7 @@ function parseExpressionBlock(p: Lexer): A_ExpressionBlock {
 
     p.forwardWithExpect(TOKEN.OpenBracket);
 
-    const children: (A_OperatorLevel | A_ExprItem)[] = [];
+    const children: (A_OperatorGroup | A_ExprAtom)[] = [];
     while (p.match(TOKEN.Atom) || p.match(TOKEN.Operator)) {
         children.push(parseExpressionBlock_0(p));
     }
@@ -196,7 +187,7 @@ function parseExpressionBlock(p: Lexer): A_ExpressionBlock {
     return { kind: "ExpressionBlock", children };
 }
 
-function parseExpressionBlock_0(p: Lexer): A_OperatorLevel | A_ExprItem {
+function parseExpressionBlock_0(p: Lexer): A_OperatorGroup | A_ExprAtom {
     if (p.match(TOKEN.Atom)) {
         return parseExprAtom(p);
     } else if (p.match(TOKEN.Operator)) {
@@ -207,27 +198,22 @@ function parseExpressionBlock_0(p: Lexer): A_OperatorLevel | A_ExprItem {
 }
 
 
-export type A_ExprItem = { kind: "ExprItem"; name: string; };
+export type A_ExprAtom = { kind: "ExprAtom"; expr: A_Expr; };
 
-function parseExprAtom(p: Lexer): A_ExprItem {
+function parseExprAtom(p: Lexer): A_ExprAtom {
     // p.expect(TOKEN.Atom);
     p.forward();
 
-    let name: string;
-    if (p.match(TOKEN.Ident)) {
-        name = p.getValue();
-        p.forward();
-    } else {
-        p.throwSyntaxError("unexpected token");
-    }
+    p.expect(TOKEN.Ident);
+    const expr = parseRef(p);
 
-    return { kind: "ExprItem", name };
+    return { kind: "ExprAtom", expr };
 }
 
 
-export type A_OperatorLevel = { kind: "OperatorLevel"; children: A_OperatorItem[]; };
+export type A_OperatorGroup = { kind: "OperatorGroup"; children: A_OperatorRule[]; };
 
-function parseOperatorGroup(p: Lexer): A_OperatorLevel {
+function parseOperatorGroup(p: Lexer): A_OperatorGroup {
     // p.expect(TOKEN.Operator);
     p.forward();
 
@@ -235,29 +221,30 @@ function parseOperatorGroup(p: Lexer): A_OperatorLevel {
 
     p.forwardWithExpect(TOKEN.OpenBracket);
 
-    let children: A_OperatorItem[] = [];
+    let children: A_OperatorRule[] = [];
     while (p.match(TOKEN.Prefix) || p.match(TOKEN.Infix) || p.match(TOKEN.Postfix)) {
         children.push(parseOperatorRule(p));
     }
 
     p.forwardWithExpect(TOKEN.CloseBracket);
 
-    return { kind: "OperatorLevel", children };
+    return { kind: "OperatorGroup", children };
 }
 
 
-export type A_OperatorItem = { kind: "OperatorItem"; operatorKind: string; value: string; };
+export type A_OperatorRule = { kind: "OperatorRule"; operatorKind: string; value: string; };
 
-function parseOperatorRule(p: Lexer): A_OperatorItem {
+function parseOperatorRule(p: Lexer): A_OperatorRule {
     const operatorKind = parseOperatorRule_0(p);
 
     p.forwardWithExpect(TOKEN.Operator);
 
+    // TODO
     p.expect(TOKEN.Str);
     let value = p.getValue();
     p.forward();
 
-    return { kind: "OperatorItem", operatorKind, value };
+    return { kind: "OperatorRule", operatorKind, value };
 }
 
 function parseOperatorRule_0(p: Lexer): string {
