@@ -137,6 +137,24 @@ export class Lexer {
                 return CreateToken(TOKEN.EOF);
             } else {
                 let char = input.getChar();
+                if (/^[a-z0-9]$/i.test(char)) {
+                    let buf = "";
+                    buf += char;
+                    input.nextChar();
+                    while (!input.eof() && /^[a-z0-9]$/i.test(input.getChar())) {
+                        buf += input.getChar();
+                        input.nextChar();
+                    }
+                    if (buf === "sub1") {
+                        return CreateToken(TOKEN.Sub1);
+                    } else if (buf === "sub2") {
+                        return CreateToken(TOKEN.Sub2);
+                    } else if (buf === "continued1") {
+                        return CreateToken(TOKEN.Continued1);
+                    } else if (buf === "continued2") {
+                        return CreateToken(TOKEN.Continued2);
+                    }
+                }
                 this.throwSyntaxError(`unexpected char '${char}'`);
             }
         }
@@ -159,7 +177,7 @@ export function CreateToken(kind: TokenKind, opts?: { value?: string; leadingTri
 }
 
 export const TOKEN = {
-    EOF: 0
+    EOF: 0, Sub1: 1, Sub2: 2, Continued1: 3, Continued2: 4
 } as const;
 export type TokenKind = typeof TOKEN extends Record<string, infer V> ? V : never;
 
@@ -181,5 +199,9 @@ export function getTokenString(specifier: TokenSpecifier): string {
         value = specifier.token.value;
     }
     if (kind === TOKEN.EOF) return "EOF";
+    if (kind === TOKEN.Sub1) return "`Sub1`";
+    if (kind === TOKEN.Sub2) return "`Sub2`";
+    if (kind === TOKEN.Continued1) return "`Continued1`";
+    if (kind === TOKEN.Continued2) return "`Continued2`";
     return kind;
 }
