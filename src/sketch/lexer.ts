@@ -1,7 +1,55 @@
-import { Input } from "./input.js";
+export class Input {
+    source: string;
+    index: number;
+    line: number;
+    column: number;
+
+    constructor(source: string) {
+        this.source = source;
+        this.index = 0;
+        this.line = 1;
+        this.column = 1;
+    }
+
+    initialize(source: string) {
+        this.source = source;
+        this.index = 0;
+        this.line = 1;
+        this.column = 1;
+    }
+
+    eof(): boolean {
+        return this.index >= this.source.length;
+    }
+
+    getChar(length: number = 1): string {
+        if (this.eof()) {
+            throw new Error("End of stream");
+        }
+        return this.source.slice(this.index, this.index + length);
+    }
+
+    nextChar(length: number = 1): void {
+        while (length > 0) {
+            if (this.eof()) {
+                throw new Error("End of stream");
+            }
+            if (this.getChar() === "\r") {
+                // ignore CR
+            } else if (this.getChar() === "\n") {
+                this.line++;
+                this.column = 1;
+            } else {
+                this.column++;
+            }
+            this.index++;
+            length--;
+        }
+    }
+}
 
 export class Lexer {
-    private input: Input;
+    input: Input;
 
     // tokens[0]には現在のトークンを格納
     // tokens[1]以降には先読み済みのトークンを格納
@@ -40,13 +88,9 @@ export class Lexer {
     }
 
     /** 現在のトークンが指定した条件を満たしているかどうかを返します。 */
-    match(token: TokenSpecifier, offset: number = 0): boolean {
+    match(kind: TokenKind, offset: number = 0): boolean {
         const current = this.getToken(offset);
-        if (token.kind != null) {
-            return current.kind === token.kind;
-        } else {
-            return current.kind === token.token.kind && current.value === token.token.value;
-        }
+        return current.kind === kind;
     }
 
     /** 次のトークンに進みます。 */
@@ -65,8 +109,8 @@ export class Lexer {
      * 現在のトークンが指定した条件を満たしていることを確認し、条件を満たしていれば次のトークンに進みます。
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
-    forwardWithExpect(token: TokenSpecifier): void {
-        this.expect(token);
+    forwardWithExpect(kind: TokenKind): void {
+        this.expect(kind);
         this.forward();
     }
 
@@ -74,10 +118,9 @@ export class Lexer {
      * 現在のトークンが指定した条件を満たしていることを確認します。
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
-    expect(token: TokenSpecifier, offset: number = 0): void {
-        if (!this.match(token, offset)) {
-            const current: TokenSpecifier = { token: this.getToken(offset) };
-            this.throwSyntaxError(`Expected ${getTokenString(token)}, but got ${getTokenString(current)}`);
+    expect(kind: TokenKind, offset: number = 0): void {
+        if (!this.match(kind, offset)) {
+            this.throwSyntaxError(`Expected ${getTokenString({ kind })}, but got ${getTokenString({ token: this.getToken(offset) })}`);
         }
     }
 
@@ -91,7 +134,7 @@ export class Lexer {
 
         while (true) {
             if (input.eof()) {
-                return TOKEN("EOF");
+                return CreateToken(TOKEN.EOF);
             } else {
                 let char = input.getChar();
                 this.throwSyntaxError(`unexpected char '${char}'`);
@@ -106,7 +149,7 @@ export type Token = {
     value?: string;
 };
 
-export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: string; }): Token {
+export function CreateToken(kind: TokenKind, opts?: { value?: string; leadingTrivia?: string; }): Token {
     opts = opts || {};
     return {
         kind,
@@ -115,7 +158,10 @@ export function TOKEN(kind: TokenKind, opts?: { value?: string; leadingTrivia?: 
     };
 }
 
-export type TokenKind = "EOF";
+export const TOKEN = {
+    EOF: 0
+} as const;
+export type TokenKind = typeof TOKEN extends Record<string, infer V> ? V : never;
 
 export type TokenSpecifier = {
     kind: TokenKind;
@@ -134,5 +180,6 @@ export function getTokenString(specifier: TokenSpecifier): string {
         kind = specifier.token.kind;
         value = specifier.token.value;
     }
+    if (kind === TOKEN.EOF) return "EOF";
     return kind;
 }
