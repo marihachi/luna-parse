@@ -164,7 +164,7 @@ export class Lexer {
         lexerLog.enter();
 
         while (true) {
-            let current = input.getString(10);
+            let current = input.peek(10);
 
             if (current.startsWith("\r\n")) {
                 input.nextChar(2);
@@ -200,31 +200,31 @@ export class Lexer {
                 }
             }
 
-            if (/^[a-zA-Z0-9_]/.test(input.getChar())) {
+            if (/^[a-zA-Z0-9_]/.test(input.peek(1))) {
                 let value = "";
-                value += input.getChar(0);
+                value += input.peek(1, 0);
                 let offset = 1;
-                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.getChar(offset))) {
-                    value += input.getChar(offset);
+                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.peek(1, offset))) {
+                    value += input.peek(1, offset);
                     offset++;
                 }
                 tokenList.push({ kind: TOKEN.Ident, source: value, value });
                 lexerLog.print(`found token: kind=${TOKEN.Ident}(${getTokenString({ kind: TOKEN.Ident })}) source="${value}"`);
             }
-            if (input.getChar() == "\"") {
+            if (input.peek(1) == "\"") {
                 let source = "";
                 let value = "";
                 let offset = 0;
-                source += input.getChar(offset);
+                source += input.peek(1, offset);
                 offset++;
                 while (!input.eof()) {
-                    if (input.getChar(offset) === "\"") break;
-                    source += input.getChar(offset);
-                    value += input.getChar(offset);
+                    if (input.peek(1, offset) === "\"") break;
+                    source += input.peek(1, offset);
+                    value += input.peek(1, offset);
                     offset++;
                 }
                 if (!input.eof()) {
-                    source += input.getChar(offset);
+                    source += input.peek(1, offset);
                     offset++;
                 }
                 tokenList.push({ kind: TOKEN.Str, source, value });
@@ -253,7 +253,7 @@ export class Lexer {
             } else {
                 lexerLog.print("unexpected char");
                 lexerLog.leave();
-                this.throwSyntaxError(`unexpected char '${input.getString(1)}'`);
+                this.throwSyntaxError(`unexpected char '${input.peek(1)}'`);
             }
         }
     }
@@ -318,12 +318,8 @@ export class Input {
         return this.index >= this.source.length;
     }
 
-    getChar(offset: number = 0): string {
-        return this.source.slice(this.index + offset, this.index + offset + 1);
-    }
-
-    getString(length: number): string {
-        return this.source.slice(this.index, this.index + length);
+    peek(length: number, offset: number = 0): string {
+        return this.source.slice(this.index + offset, this.index + offset + length);
     }
 
     nextChar(length: number = 1): void {
@@ -333,9 +329,9 @@ export class Input {
             if (this.eof()) {
                 throw new Error("End of stream");
             }
-            if (this.getString(1) === "\r") {
+            if (this.peek(1) === "\r") {
                 // ignore CR
-            } else if (this.getString(1) === "\n") {
+            } else if (this.peek(1) === "\n") {
                 this.line++;
                 this.column = 1;
             } else {
