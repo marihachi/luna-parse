@@ -1,20 +1,36 @@
 export class Logger {
     indent: number;
+    parentLogger?: Logger;
 
-    constructor() {
+    enabled: boolean = false;
+
+    constructor(parentLogger?: Logger) {
         this.indent = 0;
+        this.parentLogger = parentLogger;
+    }
+
+    getIndent(): number {
+        return this.indent + (this.parentLogger?.getIndent() ?? 0);
     }
 
     enter() {
-        this.indent++;
+        if (this.enabled) {
+            this.indent++;
+        }
     }
 
     leave() {
-        this.indent--;
+        if (this.enabled) {
+            this.indent--;
+        }
     }
 
     print(message: string) {
-        console.log(`${"  ".repeat(this.indent)}${message}`);
+        if (this.enabled) {
+            console.log(`${"  ".repeat(this.getIndent())}${message}`);
+        }
     }
 }
-export const logger = new Logger();
+export const parserLog = new Logger();
+export const lexerLog = new Logger(parserLog);
+export const inputLog = new Logger(lexerLog);

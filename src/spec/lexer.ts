@@ -1,3 +1,5 @@
+import { inputLog, lexerLog, parserLog } from "../utils/logger.js";
+
 // 字句解析 入力文字列をトークン列に変換する
 
 // lexer for luna-parse spec
@@ -43,6 +45,8 @@ export class Lexer {
 
     /** 現在のトークンを取得します。 */
     getToken(offset: number = 0): Token {
+        parserLog.print("getToken");
+        parserLog.enter();
         // 指定位置のトークンまで読まれてなければ読み取る
         while (this.tokens.length <= offset) {
             const token = this.readToken();
@@ -50,30 +54,40 @@ export class Lexer {
         }
         // 指定位置のトークンを返す
         const resultToken = this.tokens[offset];
+        parserLog.leave();
         return resultToken;
     }
 
     /** 現在のトークンに関連している値を取得します。 */
     getValue(offset: number = 0): string {
+        parserLog.print("getValue");
+        parserLog.enter();
         const token = this.getToken(offset);
         if (token.value == null) {
             throw new Error("No token value");
         }
+        parserLog.leave();
         return token.value;
     }
 
     /** 現在のトークンが指定した条件を満たしているかどうかを返します。 */
     match(kind: TokenKind, offset: number = 0): boolean {
+        parserLog.print("match");
+        parserLog.enter();
         const current = this.getToken(offset);
+        parserLog.leave();
         return current.kind === kind;
     }
 
     /** 次のトークンに進みます。 */
     forward(): Token {
+        parserLog.print("forward");
+        parserLog.enter();
         // 現在のトークンが既に読まれていれば、現在のトークンを破棄
         if (this.tokens.length > 0) {
             const token = this.tokens[0];
             this.tokens.splice(0, 1);
+            parserLog.leave();
             return token;
         } else {
             throw new Error("No token read");
@@ -85,8 +99,11 @@ export class Lexer {
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
     forwardWithExpect(kind: TokenKind): void {
+        parserLog.print("forwardWithExpect");
+        parserLog.enter();
         this.expect(kind);
         this.forward();
+        parserLog.leave();
     }
 
     /**
@@ -94,9 +111,12 @@ export class Lexer {
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
     expect(kind: TokenKind, offset: number = 0): void {
+        parserLog.print("expect");
+        parserLog.enter();
         if (!this.match(kind, offset)) {
             this.throwSyntaxError(`Expected ${getTokenString({ kind })}, but got ${getTokenString({ token: this.getToken(offset) })}`);
         }
+        parserLog.leave();
     }
 
     /** SyntaxErrorを生成します。 */
@@ -106,122 +126,134 @@ export class Lexer {
 
     private readToken(): Token {
         const input = this.input;
-        const spaces: string[] = [];
+
+        const tokenList: { kind: TokenKind; source: string; value?: string; }[] = [];
+        const spaceList: string[] = [];
+
+        const constantList: [TokenKind, string][] = [
+            [TOKEN.EOF, ""],
+            [TOKEN.Aste, "*"],
+            [TOKEN.Plus, "+"],
+            [TOKEN.Excl, "!"],
+            [TOKEN.Amp, "&"],
+            [TOKEN.Ques, "?"],
+            [TOKEN.Slash, "/"],
+            [TOKEN.Dot, "."],
+            [TOKEN.Dollar, "$"],
+            [TOKEN.Arrow, "=>"],
+            [TOKEN.Equal, "="],
+            [TOKEN.Semi, ";"],
+            [TOKEN.OpenBracket, "{"],
+            [TOKEN.CloseBracket, "}"],
+            [TOKEN.OpenParen, "("],
+            [TOKEN.CloseParen, ")"],
+            [TOKEN.Parser, "parser"],
+            [TOKEN.Lexer, "lexer"],
+            [TOKEN.Ignored, "ignored"],
+            [TOKEN.Token, "token"],
+            [TOKEN.Expression, "expression"],
+            [TOKEN.Atom, "atom"],
+            [TOKEN.Prefix, "prefix"],
+            [TOKEN.Infix, "infix"],
+            [TOKEN.Postfix, "postfix"],
+            [TOKEN.Operator, "operator"],
+            [TOKEN.Group, "group"],
+        ];
+
+        lexerLog.print("readToken");
+        lexerLog.enter();
 
         while (true) {
-            if (input.eof()) {
-                return createToken(TOKEN.EOF);
-            } else {
-                let char = input.getChar();
-                let char2 = input.getChar(2);
-                if (char2 === "\r\n") {
-                    input.nextChar(2);
-                    spaces.push(char2);
-                    continue;
-                } else if (["\r", "\n"].includes(char)) {
-                    input.nextChar();
-                    spaces.push(char);
-                    continue;
-                } else if ([" ", "\t"].includes(char)) {
-                    input.nextChar();
-                    spaces.push(char);
-                    continue;
-                } else if (char === "*") {
-                    input.nextChar();
-                    return createToken(TOKEN.Aste);
-                } else if (char === "+") {
-                    input.nextChar();
-                    return createToken(TOKEN.Plus);
-                } else if (char === "!") {
-                    input.nextChar();
-                    return createToken(TOKEN.Excl);
-                } else if (char === "&") {
-                    input.nextChar();
-                    return createToken(TOKEN.Amp);
-                } else if (char === "?") {
-                    input.nextChar();
-                    return createToken(TOKEN.Ques);
-                } else if (char === "/") {
-                    input.nextChar();
-                    return createToken(TOKEN.Slash);
-                } else if (char === ".") {
-                    input.nextChar();
-                    return createToken(TOKEN.Dot);
-                } else if (char === "$") {
-                    input.nextChar();
-                    return createToken(TOKEN.Dollar);
-                } else if (char2 === "=>") {
-                    input.nextChar(2);
-                    return createToken(TOKEN.Arrow);
-                } else if (char === "=") {
-                    input.nextChar();
-                    return createToken(TOKEN.Equal);
-                } else if (char === ";") {
-                    input.nextChar();
-                    return createToken(TOKEN.Semi);
-                } else if (char === "{") {
-                    input.nextChar();
-                    return createToken(TOKEN.OpenBracket);
-                } else if (char === "}") {
-                    input.nextChar();
-                    return createToken(TOKEN.CloseBracket);
-                } else if (char === "(") {
-                    input.nextChar();
-                    return createToken(TOKEN.OpenParen);
-                } else if (char === ")") {
-                    input.nextChar();
-                    return createToken(TOKEN.CloseParen);
-                } else if (/^[a-z0-9]$/i.test(char)) {
-                    let buf = "";
-                    buf += char;
-                    input.nextChar();
-                    while (!input.eof() && /^[a-z0-9]$/i.test(input.getChar())) {
-                        buf += input.getChar();
-                        input.nextChar();
+            let char10 = input.getString(10);
+
+            if (char10.startsWith("\r\n")) {
+                input.nextChar(2);
+                spaceList.push(char10.slice(0, 2));
+                lexerLog.print("CRLF");
+                continue;
+            }
+            if (char10.startsWith("\r") || char10.startsWith("\n")) {
+                input.nextChar();
+                spaceList.push(char10.slice(0, 1));
+                lexerLog.print("CR or LF");
+                continue;
+            }
+            if (char10.startsWith(" ") || char10.startsWith("\t")) {
+                input.nextChar();
+                spaceList.push(char10.slice(0, 1));
+                lexerLog.print("space or tab");
+                continue;
+            }
+
+            for (let i = 0; i < constantList.length; i++) {
+                const constant = constantList[i];
+                if (constant[1].length === 0) {
+                    if (char10 === "") {
+                        tokenList.push({ kind: constant[0], source: constant[1] });
+                        lexerLog.print("found token: EOF");
                     }
-                    if (buf === "parser") {
-                        return createToken(TOKEN.Parser);
-                    } else if (buf === "lexer") {
-                        return createToken(TOKEN.Lexer);
-                    } else if (buf === "ignored") {
-                        return createToken(TOKEN.Ignored);
-                    } else if (buf === "token") {
-                        return createToken(TOKEN.Token);
-                    } else if (buf === "expression") {
-                        return createToken(TOKEN.Expression);
-                    } else if (buf === "atom") {
-                        return createToken(TOKEN.Atom);
-                    } else if (buf === "prefix") {
-                        return createToken(TOKEN.Prefix);
-                    } else if (buf === "infix") {
-                        return createToken(TOKEN.Infix);
-                    } else if (buf === "postfix") {
-                        return createToken(TOKEN.Postfix);
-                    } else if (buf === "operator") {
-                        return createToken(TOKEN.Operator);
-                    } else if (buf === "group") {
-                        return createToken(TOKEN.Group);
-                    } else {
-                        return createToken(TOKEN.Ident, { value: buf });
-                    }
-                } else if (char === "\"") {
-                    let buf = "";
-                    input.nextChar();
-                    while (!input.eof()) {
-                        if (input.getChar() === "\"") break;
-                        buf += input.getChar();
-                        input.nextChar();
-                    }
-                    if (!input.eof()) {
-                        input.nextChar();
-                    }
-                    return createToken(TOKEN.Str, { value: buf });
-                } else if (char === "[") {
-                    // TODO: CharRange
-                    this.throwSyntaxError(`unexpected char '${char}'`);
                 } else {
-                    this.throwSyntaxError(`unexpected char '${char}'`);
+                    if (char10.startsWith(constant[1])) {
+                        tokenList.push({ kind: constant[0], source: constant[1] });
+                        lexerLog.print(`found token: kind=${constant[0]}(${getTokenString({ kind: constant[0] })}) source="${constant[1]}"`);
+                    }
                 }
+            }
+
+            if (/^[a-zA-Z0-9_]/.test(input.getChar())) {
+                let value = "";
+                value += input.getChar(0);
+                let offset = 1;
+                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.getChar(offset))) {
+                    value += input.getChar(offset);
+                    offset++;
+                }
+                tokenList.push({ kind: TOKEN.Ident, source: value, value });
+                lexerLog.print(`found token: kind=${TOKEN.Ident}(${getTokenString({ kind: TOKEN.Ident })}) source="${value}"`);
+            }
+            if (input.getChar() == "\"") {
+                let source = "";
+                let value = "";
+                let offset = 0;
+                source += input.getChar(offset);
+                offset++;
+                while (!input.eof()) {
+                    if (input.getChar(offset) === "\"") break;
+                    source += input.getChar(offset);
+                    value += input.getChar(offset);
+                    offset++;
+                }
+                if (!input.eof()) {
+                    source += input.getChar(offset);
+                    offset++;
+                }
+                tokenList.push({ kind: TOKEN.Str, source, value });
+                lexerLog.print(`found token: kind=${TOKEN.Str}(${getTokenString({ kind: TOKEN.Str })}) source="${source}"`);
+            }
+            if (char10.startsWith("[")) {
+                // TODO: CharRange
+                lexerLog.leave();
+                this.throwSyntaxError("not implemented yet");
+            }
+
+            if (tokenList.length >= 0) {
+                // マッチしたトークンのうち、最も長いトークンとして読み取る。
+                let widestIndex = 0;
+                for (let i = 1; i < tokenList.length; i++) {
+                    if (tokenList[i].source.length > tokenList[widestIndex].source.length) {
+                        widestIndex = i;
+                    }
+                }
+                if (tokenList[widestIndex].source.length > 0) {
+                    input.nextChar(tokenList[widestIndex].source.length);
+                }
+                lexerLog.print(`output token: kind=${tokenList[widestIndex].kind}(${getTokenString({ kind: tokenList[widestIndex].kind })}) source="${tokenList[widestIndex].source}"`);
+                lexerLog.leave();
+                return createToken(tokenList[widestIndex].kind, { value: tokenList[widestIndex].value });
+            } else {
+                lexerLog.print("unexpected char");
+                lexerLog.leave();
+                this.throwSyntaxError(`unexpected char '${input.getString(1)}'`);
             }
         }
     }
@@ -304,21 +336,24 @@ export class Input {
         return this.index >= this.source.length;
     }
 
-    getChar(length: number = 1): string {
-        if (this.eof()) {
-            throw new Error("End of stream");
-        }
+    getChar(offset: number = 0): string {
+        return this.source.slice(this.index + offset, this.index + offset + 1);
+    }
+
+    getString(length: number): string {
         return this.source.slice(this.index, this.index + length);
     }
 
     nextChar(length: number = 1): void {
+        inputLog.print(`nextChar length=${length}`);
+        inputLog.enter();
         while (length > 0) {
             if (this.eof()) {
                 throw new Error("End of stream");
             }
-            if (this.getChar() === "\r") {
+            if (this.getString(1) === "\r") {
                 // ignore CR
-            } else if (this.getChar() === "\n") {
+            } else if (this.getString(1) === "\n") {
                 this.line++;
                 this.column = 1;
             } else {
@@ -327,5 +362,6 @@ export class Input {
             this.index++;
             length--;
         }
+        inputLog.leave();
     }
 }
