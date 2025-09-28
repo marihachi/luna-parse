@@ -5,18 +5,17 @@ parser SpecParser {
     rule = Ident Equal expr1 Semi;
     expr1 = expr2 (Slash expr2)*;
     expr2 = expr3+;
-    expr3 = expr4 (Asta / Plus / Ques)?;
-    expr4 = (Amp / Excl)? atom;
-    atom = OpenParen expr1 CloseParen / expressionBlock / Ident;
+    expr3 = parserAtom (Aste / Plus / Ques)?;
+    parserAtom = OpenParen expr1 CloseParen / expressionBlock / Ident;
     lexerBlock = Lexer Ident OpenBracket lexerRule* CloseBracket;
     lexerRule = (Ignored? Token)? Ident Equal lexerExpr1 (Arrow OpenBracket CloseBracket)? Semi;
     lexerExpr1 = lexerExpr2 (Slash lexerExpr2)*;
     lexerExpr2 = lexerExpr3+;
-    lexerExpr3 = lexerExpr4 (Asta / Plus / Ques)?;
+    lexerExpr3 = lexerExpr4 (Aste / Plus / Ques)?;
     lexerExpr4 = (Amp / Excl)? lexerAtom;
     lexerAtom = OpenParen lexerExpr1 CloseParen / Dot / Dollar / Str / CharRange / Ident;
     expressionBlock = Expression OpenBracket (exprAtom / operatorGroup)* CloseBracket;
-    exprAtom = Atom atom;
+    exprAtom = Atom parserAtom;
     operatorGroup = Operator Group OpenBracket operatorRule* CloseBracket;
     operatorRule = (Prefix / Infix / Postfix) Operator Ident;
 }
@@ -24,7 +23,7 @@ parser SpecParser {
 lexer SpecLexer {
     token EOF = $;
     ignored token Spacing = " " / "\t" / "\r\n" / "\n";
-    token Asta = "*";
+    token Aste = "*";
     token Plus = "+";
     token Excl = "!";
     token Amp = "&";

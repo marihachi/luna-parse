@@ -112,19 +112,33 @@ function parseExpr2(p: Lexer): A_Expr {
 }
 
 
-export type A_Repeat = { kind: "Repeat"; };
+export type A_Repeat = { kind: "Repeat"; minimum: number; expr: A_Expr; };
 
-export type A_Option = { kind: "Option"; };
+export type A_Option = { kind: "Option"; expr: A_Expr; };
 
 function parseExpr3(p: Lexer): A_Expr {
     const expr = parseExpr4(p);
 
-    // option
     if (p.match(TOKEN.Aste) || p.match(TOKEN.Plus) || p.match(TOKEN.Ques)) {
-        // TODO
+        return parseExpr3_0(p, expr);
     }
 
     return expr;
+}
+
+function parseExpr3_0(p: Lexer, expr: A_Expr): A_Expr {
+    if (p.match(TOKEN.Aste)) {
+        p.forward();
+        return { kind: "Repeat", minimum: 0, expr } satisfies A_Repeat;
+    } else if (p.match(TOKEN.Plus)) {
+        p.forward();
+        return { kind: "Repeat", minimum: 1, expr } satisfies A_Repeat;
+    } else if (p.match(TOKEN.Ques)) {
+        p.forward();
+        return { kind: "Option", expr } satisfies A_Option;
+    } else {
+        p.throwSyntaxError("unexpected token");
+    }
 }
 
 
@@ -283,7 +297,6 @@ function parseLexerBlock(p: Lexer): A_LexerBlock {
 
     return { kind: "LexerBlock", name, rules: children };
 }
-
 
 
 export type A_LexerRule = { kind: "LexerRule"; name: string; children: string };

@@ -2,54 +2,26 @@
 
 // lexer for luna-parse spec
 
-export class Input {
-    source: string;
-    index: number;
-    line: number;
-    column: number;
+export const TOKEN = {
+    EOF: 0, Aste: 1, Plus: 2, Excl: 3, Amp: 4, Ques: 5, Slash: 6, Dot: 7, Dollar: 8, Arrow: 9,
+    Equal: 10, Semi: 11, OpenBracket: 12, CloseBracket: 13, OpenParen: 14, CloseParen: 15, Parser: 16, Lexer: 17, Ignored: 18, Token: 19,
+    Expression: 20, Atom: 21, Prefix: 22, Infix: 23, Postfix: 24, Operator: 25, Group: 26, Str: 27, CharRange: 28, Ident: 29
+} as const;
+export type TokenKind = typeof TOKEN extends Record<string, infer V> ? V : never;
 
-    constructor(source: string) {
-        this.source = source;
-        this.index = 0;
-        this.line = 1;
-        this.column = 1;
-    }
+export type Token = {
+    kind: TokenKind;
+    leadingTrivia?: string;
+    value?: string;
+};
 
-    initialize(source: string) {
-        this.source = source;
-        this.index = 0;
-        this.line = 1;
-        this.column = 1;
-    }
-
-    eof(): boolean {
-        return this.index >= this.source.length;
-    }
-
-    getChar(length: number = 1): string {
-        if (this.eof()) {
-            throw new Error("End of stream");
-        }
-        return this.source.slice(this.index, this.index + length);
-    }
-
-    nextChar(length: number = 1): void {
-        while (length > 0) {
-            if (this.eof()) {
-                throw new Error("End of stream");
-            }
-            if (this.getChar() === "\r") {
-                // ignore CR
-            } else if (this.getChar() === "\n") {
-                this.line++;
-                this.column = 1;
-            } else {
-                this.column++;
-            }
-            this.index++;
-            length--;
-        }
-    }
+export function createToken(kind: TokenKind, opts?: { value?: string; leadingTrivia?: string; }): Token {
+    opts = opts || {};
+    return {
+        kind,
+        leadingTrivia: opts.leadingTrivia,
+        value: opts.value,
+    };
 }
 
 export class Lexer {
@@ -138,7 +110,7 @@ export class Lexer {
 
         while (true) {
             if (input.eof()) {
-                return CreateToken(TOKEN.EOF);
+                return createToken(TOKEN.EOF);
             } else {
                 let char = input.getChar();
                 let char2 = input.getChar(2);
@@ -156,49 +128,49 @@ export class Lexer {
                     continue;
                 } else if (char === "*") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Aste);
+                    return createToken(TOKEN.Aste);
                 } else if (char === "+") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Plus);
+                    return createToken(TOKEN.Plus);
                 } else if (char === "!") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Excl);
+                    return createToken(TOKEN.Excl);
                 } else if (char === "&") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Amp);
+                    return createToken(TOKEN.Amp);
                 } else if (char === "?") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Ques);
+                    return createToken(TOKEN.Ques);
                 } else if (char === "/") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Slash);
+                    return createToken(TOKEN.Slash);
                 } else if (char === ".") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Dot);
+                    return createToken(TOKEN.Dot);
                 } else if (char === "$") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Dollar);
+                    return createToken(TOKEN.Dollar);
                 } else if (char2 === "=>") {
                     input.nextChar(2);
-                    return CreateToken(TOKEN.Arrow);
+                    return createToken(TOKEN.Arrow);
                 } else if (char === "=") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Equal);
+                    return createToken(TOKEN.Equal);
                 } else if (char === ";") {
                     input.nextChar();
-                    return CreateToken(TOKEN.Semi);
+                    return createToken(TOKEN.Semi);
                 } else if (char === "{") {
                     input.nextChar();
-                    return CreateToken(TOKEN.OpenBracket);
+                    return createToken(TOKEN.OpenBracket);
                 } else if (char === "}") {
                     input.nextChar();
-                    return CreateToken(TOKEN.CloseBracket);
+                    return createToken(TOKEN.CloseBracket);
                 } else if (char === "(") {
                     input.nextChar();
-                    return CreateToken(TOKEN.OpenParen);
+                    return createToken(TOKEN.OpenParen);
                 } else if (char === ")") {
                     input.nextChar();
-                    return CreateToken(TOKEN.CloseParen);
+                    return createToken(TOKEN.CloseParen);
                 } else if (/^[a-z0-9]$/i.test(char)) {
                     let buf = "";
                     buf += char;
@@ -208,29 +180,29 @@ export class Lexer {
                         input.nextChar();
                     }
                     if (buf === "parser") {
-                        return CreateToken(TOKEN.Parser);
+                        return createToken(TOKEN.Parser);
                     } else if (buf === "lexer") {
-                        return CreateToken(TOKEN.Lexer);
+                        return createToken(TOKEN.Lexer);
                     } else if (buf === "ignored") {
-                        return CreateToken(TOKEN.Ignored);
+                        return createToken(TOKEN.Ignored);
                     } else if (buf === "token") {
-                        return CreateToken(TOKEN.Token);
+                        return createToken(TOKEN.Token);
                     } else if (buf === "expression") {
-                        return CreateToken(TOKEN.Expression);
+                        return createToken(TOKEN.Expression);
                     } else if (buf === "atom") {
-                        return CreateToken(TOKEN.Atom);
+                        return createToken(TOKEN.Atom);
                     } else if (buf === "prefix") {
-                        return CreateToken(TOKEN.Prefix);
+                        return createToken(TOKEN.Prefix);
                     } else if (buf === "infix") {
-                        return CreateToken(TOKEN.Infix);
+                        return createToken(TOKEN.Infix);
                     } else if (buf === "postfix") {
-                        return CreateToken(TOKEN.Postfix);
+                        return createToken(TOKEN.Postfix);
                     } else if (buf === "operator") {
-                        return CreateToken(TOKEN.Operator);
+                        return createToken(TOKEN.Operator);
                     } else if (buf === "group") {
-                        return CreateToken(TOKEN.Group);
+                        return createToken(TOKEN.Group);
                     } else {
-                        return CreateToken(TOKEN.Ident, { value: buf });
+                        return createToken(TOKEN.Ident, { value: buf });
                     }
                 } else if (char === "\"") {
                     let buf = "";
@@ -243,7 +215,7 @@ export class Lexer {
                     if (!input.eof()) {
                         input.nextChar();
                     }
-                    return CreateToken(TOKEN.Str, { value: buf });
+                    return createToken(TOKEN.Str, { value: buf });
                 } else if (char === "[") {
                     // TODO: CharRange
                     this.throwSyntaxError(`unexpected char '${char}'`);
@@ -254,28 +226,6 @@ export class Lexer {
         }
     }
 }
-
-export type Token = {
-    kind: TokenKind;
-    leadingTrivia?: string;
-    value?: string;
-};
-
-export function CreateToken(kind: TokenKind, opts?: { value?: string; leadingTrivia?: string; }): Token {
-    opts = opts || {};
-    return {
-        kind,
-        leadingTrivia: opts.leadingTrivia,
-        value: opts.value,
-    };
-}
-
-export const TOKEN = {
-    EOF: 0, Aste: 1, Plus: 2, Excl: 3, Amp: 4, Ques: 5, Slash: 6, Dot: 7, Dollar: 8, Arrow: 9,
-    Equal: 10, Semi: 11, OpenBracket: 12, CloseBracket: 13, OpenParen: 14, CloseParen: 15, Parser: 16, Lexer: 17, Ignored: 18, Token: 19,
-    Expression: 20, Atom: 21, Prefix: 22, Infix: 23, Postfix: 24, Operator: 25, Group: 26, Str: 27, CharRange: 28, Ident: 29
-} as const;
-export type TokenKind = typeof TOKEN extends Record<string, infer V> ? V : never;
 
 export type TokenSpecifier = {
     kind: TokenKind;
@@ -328,4 +278,54 @@ export function getTokenString(specifier: TokenSpecifier): string {
     if (kind === TOKEN.CharRange) return `CharRange`;
     if (kind === TOKEN.Ident) return `Ident`;
     return kind;
+}
+
+export class Input {
+    source: string;
+    index: number;
+    line: number;
+    column: number;
+
+    constructor(source: string) {
+        this.source = source;
+        this.index = 0;
+        this.line = 1;
+        this.column = 1;
+    }
+
+    initialize(source: string) {
+        this.source = source;
+        this.index = 0;
+        this.line = 1;
+        this.column = 1;
+    }
+
+    eof(): boolean {
+        return this.index >= this.source.length;
+    }
+
+    getChar(length: number = 1): string {
+        if (this.eof()) {
+            throw new Error("End of stream");
+        }
+        return this.source.slice(this.index, this.index + length);
+    }
+
+    nextChar(length: number = 1): void {
+        while (length > 0) {
+            if (this.eof()) {
+                throw new Error("End of stream");
+            }
+            if (this.getChar() === "\r") {
+                // ignore CR
+            } else if (this.getChar() === "\n") {
+                this.line++;
+                this.column = 1;
+            } else {
+                this.column++;
+            }
+            this.index++;
+            length--;
+        }
+    }
 }
