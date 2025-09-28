@@ -1,0 +1,13 @@
+parser ExampleParser {
+    parent = sub*;
+    sub = sub1 / sub2;
+    sub1 = "sub1" "continued1";
+    sub2 = "sub2" "continued2";
+}
+lexer ExampleLexer {
+    ignored token Spacing = " " / "\t" / "\r\n" / "\n";
+    token Sub1 = "sub1";
+    token Sub2 = "sub2";
+    token Continued1 = "continued1";
+    token Continued2 = "continued2";
+}
