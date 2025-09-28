@@ -26,6 +26,36 @@ export function createToken(kind: TokenKind, opts?: { value?: string; leadingTri
     };
 }
 
+const constantList: { kind: TokenKind; source: string; }[] = [
+    { kind: TOKEN.EOF, source: "" },
+    { kind: TOKEN.Aste, source: "*" },
+    { kind: TOKEN.Plus, source: "+" },
+    { kind: TOKEN.Excl, source: "!" },
+    { kind: TOKEN.Amp, source: "&" },
+    { kind: TOKEN.Ques, source: "?" },
+    { kind: TOKEN.Slash, source: "/" },
+    { kind: TOKEN.Dot, source: "." },
+    { kind: TOKEN.Dollar, source: "$" },
+    { kind: TOKEN.Arrow, source: "=>" },
+    { kind: TOKEN.Equal, source: "=" },
+    { kind: TOKEN.Semi, source: ";" },
+    { kind: TOKEN.OpenBracket, source: "{" },
+    { kind: TOKEN.CloseBracket, source: "}" },
+    { kind: TOKEN.OpenParen, source: "(" },
+    { kind: TOKEN.CloseParen, source: ")" },
+    { kind: TOKEN.Parser, source: "parser" },
+    { kind: TOKEN.Lexer, source: "lexer" },
+    { kind: TOKEN.Ignored, source: "ignored" },
+    { kind: TOKEN.Token, source: "token" },
+    { kind: TOKEN.Expression, source: "expression" },
+    { kind: TOKEN.Atom, source: "atom" },
+    { kind: TOKEN.Prefix, source: "prefix" },
+    { kind: TOKEN.Infix, source: "infix" },
+    { kind: TOKEN.Postfix, source: "postfix" },
+    { kind: TOKEN.Operator, source: "operator" },
+    { kind: TOKEN.Group, source: "group" },
+];
+
 export class Lexer {
     input: Input;
 
@@ -130,72 +160,42 @@ export class Lexer {
         const tokenList: { kind: TokenKind; source: string; value?: string; }[] = [];
         const spaceList: string[] = [];
 
-        const constantList: [TokenKind, string][] = [
-            [TOKEN.EOF, ""],
-            [TOKEN.Aste, "*"],
-            [TOKEN.Plus, "+"],
-            [TOKEN.Excl, "!"],
-            [TOKEN.Amp, "&"],
-            [TOKEN.Ques, "?"],
-            [TOKEN.Slash, "/"],
-            [TOKEN.Dot, "."],
-            [TOKEN.Dollar, "$"],
-            [TOKEN.Arrow, "=>"],
-            [TOKEN.Equal, "="],
-            [TOKEN.Semi, ";"],
-            [TOKEN.OpenBracket, "{"],
-            [TOKEN.CloseBracket, "}"],
-            [TOKEN.OpenParen, "("],
-            [TOKEN.CloseParen, ")"],
-            [TOKEN.Parser, "parser"],
-            [TOKEN.Lexer, "lexer"],
-            [TOKEN.Ignored, "ignored"],
-            [TOKEN.Token, "token"],
-            [TOKEN.Expression, "expression"],
-            [TOKEN.Atom, "atom"],
-            [TOKEN.Prefix, "prefix"],
-            [TOKEN.Infix, "infix"],
-            [TOKEN.Postfix, "postfix"],
-            [TOKEN.Operator, "operator"],
-            [TOKEN.Group, "group"],
-        ];
-
         lexerLog.print("readToken");
         lexerLog.enter();
 
         while (true) {
-            let char10 = input.getString(10);
+            let current = input.getString(10);
 
-            if (char10.startsWith("\r\n")) {
+            if (current.startsWith("\r\n")) {
                 input.nextChar(2);
-                spaceList.push(char10.slice(0, 2));
+                spaceList.push(current.slice(0, 2));
                 lexerLog.print("CRLF");
                 continue;
             }
-            if (char10.startsWith("\r") || char10.startsWith("\n")) {
+            if (current.startsWith("\r") || current.startsWith("\n")) {
                 input.nextChar();
-                spaceList.push(char10.slice(0, 1));
+                spaceList.push(current.slice(0, 1));
                 lexerLog.print("CR or LF");
                 continue;
             }
-            if (char10.startsWith(" ") || char10.startsWith("\t")) {
+            if (current.startsWith(" ") || current.startsWith("\t")) {
                 input.nextChar();
-                spaceList.push(char10.slice(0, 1));
+                spaceList.push(current.slice(0, 1));
                 lexerLog.print("space or tab");
                 continue;
             }
 
+            if (current === "") {
+                tokenList.push({ kind: 0, source: "" });
+                lexerLog.print(`found token: kind=${0}(${getTokenString({ kind: 0 })}) source=""`);
+            }
+
             for (let i = 0; i < constantList.length; i++) {
                 const constant = constantList[i];
-                if (constant[1].length === 0) {
-                    if (char10 === "") {
-                        tokenList.push({ kind: constant[0], source: constant[1] });
-                        lexerLog.print("found token: EOF");
-                    }
-                } else {
-                    if (char10.startsWith(constant[1])) {
-                        tokenList.push({ kind: constant[0], source: constant[1] });
-                        lexerLog.print(`found token: kind=${constant[0]}(${getTokenString({ kind: constant[0] })}) source="${constant[1]}"`);
+                if (constant.source.length > 0) {
+                    if (current.startsWith(constant.source)) {
+                        tokenList.push({ kind: constant.kind, source: constant.source });
+                        lexerLog.print(`found token: kind=${constant.kind}(${getTokenString({ kind: constant.kind })}) source="${constant.source}"`);
                     }
                 }
             }
@@ -230,14 +230,14 @@ export class Lexer {
                 tokenList.push({ kind: TOKEN.Str, source, value });
                 lexerLog.print(`found token: kind=${TOKEN.Str}(${getTokenString({ kind: TOKEN.Str })}) source="${source}"`);
             }
-            if (char10.startsWith("[")) {
+            if (current.startsWith("[")) {
                 // TODO: CharRange
                 lexerLog.leave();
                 this.throwSyntaxError("not implemented yet");
             }
 
             if (tokenList.length >= 0) {
-                // マッチしたトークンのうち、最も長いトークンとして読み取る。
+                // マッチしたトークンのうち、最も長いトークンとして読み取る。同じ長さの場合は先に現れたトークンが優先。
                 let widestIndex = 0;
                 for (let i = 1; i < tokenList.length; i++) {
                     if (tokenList[i].source.length > tokenList[widestIndex].source.length) {
@@ -276,40 +276,22 @@ export function getTokenString(specifier: TokenSpecifier): string {
         kind = specifier.token.kind;
         value = specifier.token.value;
     }
-    if (kind === TOKEN.EOF) return "EOF";
-    if (kind === TOKEN.Aste) return "`*`";
-    if (kind === TOKEN.Plus) return "`+`";
-    if (kind === TOKEN.Excl) return "`!`";
-    if (kind === TOKEN.Amp) return "`&`";
-    if (kind === TOKEN.Ques) return "`?`";
-    if (kind === TOKEN.Slash) return "`/`";
-    if (kind === TOKEN.Dot) return "`.`";
-    if (kind === TOKEN.Dollar) return "`$`";
-    if (kind === TOKEN.Arrow) return "`=>`";
-    if (kind === TOKEN.Equal) return "`=`";
-    if (kind === TOKEN.Semi) return "`;`";
-    if (kind === TOKEN.OpenBracket) return "`{`";
-    if (kind === TOKEN.CloseBracket) return "`}`";
-    if (kind === TOKEN.OpenParen) return "`(`";
-    if (kind === TOKEN.CloseParen) return "`)`";
-    if (kind === TOKEN.Parser) return "`parser`";
-    if (kind === TOKEN.Lexer) return "`lexer`";
-    if (kind === TOKEN.Ignored) return "`ignored`";
-    if (kind === TOKEN.Token) return "`token`";
-    if (kind === TOKEN.Expression) return "`expression`";
-    if (kind === TOKEN.Atom) return "`atom`";
-    if (kind === TOKEN.Prefix) return "`prefix`";
-    if (kind === TOKEN.Infix) return "`infix`";
-    if (kind === TOKEN.Postfix) return "`postfix`";
-    if (kind === TOKEN.Operator) return "`operator`";
-    if (kind === TOKEN.Group) return "`group`";
+
+    if (kind === 0) return "EOF";
+
+    const constant = constantList.find(x => x.kind === kind);
+    if (constant != null) {
+        return `\`${constant.source}\``;
+    }
+
     if (kind === TOKEN.Str && value != null) return `\`"${value}"\``;
     if (kind === TOKEN.CharRange && value != null) return `[${value}]`;
     if (kind === TOKEN.Ident && value != null) return `\`${value}\``;
     if (kind === TOKEN.Str) return `Str`;
     if (kind === TOKEN.CharRange) return `CharRange`;
     if (kind === TOKEN.Ident) return `Ident`;
-    return kind;
+
+    throw new Error(`unknown token: ${kind}`);
 }
 
 export class Input {
