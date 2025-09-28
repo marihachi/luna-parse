@@ -74,7 +74,6 @@ export class Lexer {
         // 指定位置のトークンまで読まれてなければ読み取る
         while (this.tokens.length <= offset) {
             const token = this.readToken();
-            // logger.print(`token ${token.kind} ${token.value}`);
             this.tokens.push(token);
         }
         // 指定位置のトークンを返す
