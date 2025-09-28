@@ -31,7 +31,7 @@ function parseToplevel(p: Lexer): A_Toplevel {
 }
 
 
-export type A_ParserBlock = { kind: "ParserBlock"; name: string; };
+export type A_ParserBlock = { kind: "ParserBlock"; name: string; rules: A_Rule[]; };
 
 function parseParserBlock(p: Lexer): A_ParserBlock {
     // p.expect(TOKEN.Parser);
@@ -50,11 +50,11 @@ function parseParserBlock(p: Lexer): A_ParserBlock {
 
     p.forwardWithExpect(TOKEN.CloseBracket);
 
-    return { kind: "ParserBlock", name };
+    return { kind: "ParserBlock", name, rules: children };
 }
 
 
-export type A_Rule = { kind: "Rule"; name: string; expr: A_Expr };
+export type A_Rule = { kind: "Rule"; name: string; expr: A_Expr; };
 
 function parseRule(p: Lexer): A_Rule {
     // p.expect(TOKEN.Ident);
@@ -73,7 +73,7 @@ function parseRule(p: Lexer): A_Rule {
 
 export type A_Expr = A_Sequence | A_Alternate | A_Repeat | A_Option | A_Matched | A_NotMatched | A_ExpressionBlock | A_Ref;
 
-export type A_Alternate = { kind: "Alternate"; children: A_Expr[]; };
+export type A_Alternate = { kind: "Alternate"; exprs: A_Expr[]; };
 
 function parseExpr1(p: Lexer): A_Expr {
     const children: A_Expr[] = [];
@@ -88,12 +88,12 @@ function parseExpr1(p: Lexer): A_Expr {
     if (children.length === 1) {
         return children[0];
     } else {
-        return { kind: "Alternate", children } satisfies A_Alternate;
+        return { kind: "Alternate", exprs: children } satisfies A_Alternate;
     }
 }
 
 
-export type A_Sequence = { kind: "Sequence"; children: A_Expr[]; };
+export type A_Sequence = { kind: "Sequence"; exprs: A_Expr[]; };
 
 function parseExpr2(p: Lexer): A_Expr {
     const children: A_Expr[] = [];
@@ -105,7 +105,7 @@ function parseExpr2(p: Lexer): A_Expr {
     if (children.length === 1) {
         return children[0];
     } else if (children.length > 1) {
-        return { kind: "Sequence", children } satisfies A_Sequence;
+        return { kind: "Sequence", exprs: children } satisfies A_Sequence;
     } else {
         p.throwSyntaxError("unexpected token");
     }
@@ -262,7 +262,7 @@ function parseOperatorRule_0(p: Lexer): string {
 }
 
 
-export type A_LexerBlock = { kind: "LexerBlock"; name: string; };
+export type A_LexerBlock = { kind: "LexerBlock"; name: string; rules: A_LexerRule[]; };
 
 function parseLexerBlock(p: Lexer): A_LexerBlock {
     // p.expect(TOKEN.Lexer);
@@ -281,7 +281,7 @@ function parseLexerBlock(p: Lexer): A_LexerBlock {
 
     p.forwardWithExpect(TOKEN.CloseBracket);
 
-    return { kind: "LexerBlock", name };
+    return { kind: "LexerBlock", name, rules: children };
 }
 
 

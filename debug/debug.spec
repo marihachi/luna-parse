@@ -1,11 +1,8 @@
 parser DebugParser {
-    parser1 = rule1 / rule2;
-    rule1 = Token1 Token2;
-    rule2 = expression {};
+    root = Token1 Token2 / Token2;
 }
 
 lexer DebugLexer {
-    Token1 = Token2;
-    token Token2 = Token3;
-    ignored token Token3 = Sub1;
+    token Token1 = Sub1;
+    token Token2 = Sub2;
 }
