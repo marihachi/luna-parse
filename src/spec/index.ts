@@ -1,4 +1,4 @@
-import { emit } from "./emit.js";
+import { emit } from "./emitters/emitter.TypeScript.js";
 import { parse } from "./parser.js";
 import { analyze } from "./analyze.js";
 

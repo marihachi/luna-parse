@@ -1,8 +1,8 @@
-import { inputLog, lexerLog, parserLog } from "../utils/logger.js";
-
 // 字句解析 入力文字列をトークン列に変換する
 
 // lexer for luna-parse spec
+
+import { inputLog, lexerLog, parserLog } from "../utils/logger.js";
 
 export const TOKEN = {
     EOF: 0, Aste: 1, Plus: 2, Excl: 3, Amp: 4, Ques: 5, Slash: 6, Dot: 7, Dollar: 8, Arrow: 9,

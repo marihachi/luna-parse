@@ -1,8 +1,8 @@
 // 構文解析 トークン列をASTに変換する
 
-import { Lexer, TOKEN } from "./lexer.js";
-
 // parser for luna-parse spec
+
+import { Lexer, TOKEN } from "./lexer.js";
 
 export function parse(source: string): A_Toplevel[] {
     const p = new Lexer(source);
