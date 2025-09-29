@@ -3,7 +3,7 @@ import path from "node:path";
 import { generateCode } from "./spec/index.js";
 
 // load
-const resolvedPath = path.resolve("./debug/debug.spec");
+const resolvedPath = path.resolve("./debug/debug.luna");
 let fileContent;
 try {
     fileContent = fs.readFileSync(resolvedPath, { encoding: 'utf8' });
