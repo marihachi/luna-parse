@@ -70,7 +70,7 @@ npm run build
 
 3. Generate a code of your parser
 ```
-npm run generate
+npm run generate ./your-parser.luna
 ```
 
 4. Enjoy your parser life!
