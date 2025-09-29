@@ -167,19 +167,19 @@ export class Lexer {
             let current = input.peek(10);
 
             if (current.startsWith("\r\n")) {
-                input.nextChar(2);
+                input.forward(2);
                 spaceList.push(current.slice(0, 2));
                 lexerLog.print("CRLF");
                 continue;
             }
             if (current.startsWith("\r") || current.startsWith("\n")) {
-                input.nextChar();
+                input.forward(1);
                 spaceList.push(current.slice(0, 1));
                 lexerLog.print("CR or LF");
                 continue;
             }
             if (current.startsWith(" ") || current.startsWith("\t")) {
-                input.nextChar();
+                input.forward(1);
                 spaceList.push(current.slice(0, 1));
                 lexerLog.print("space or tab");
                 continue;
@@ -245,7 +245,7 @@ export class Lexer {
                     }
                 }
                 if (tokenList[widestIndex].source.length > 0) {
-                    input.nextChar(tokenList[widestIndex].source.length);
+                    input.forward(tokenList[widestIndex].source.length);
                 }
                 lexerLog.print(`output token: kind=${tokenList[widestIndex].kind}(${getTokenString({ kind: tokenList[widestIndex].kind })}) source="${tokenList[widestIndex].source}"`);
                 lexerLog.leave();
@@ -322,8 +322,8 @@ export class Input {
         return this.source.slice(this.index + offset, this.index + offset + length);
     }
 
-    nextChar(length: number = 1): void {
-        inputLog.print(`nextChar length=${length}`);
+    forward(length: number): void {
+        inputLog.print(`Input.forward length=${length}`);
         inputLog.enter();
         while (length > 0) {
             if (this.eof()) {
