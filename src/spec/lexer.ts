@@ -89,10 +89,10 @@ export class Lexer {
     }
 
     /** 現在のトークンに関連している値を取得します。 */
-    getValue(offset: number = 0): string {
+    getValue(): string {
         parserLog.print("getValue");
         parserLog.enter();
-        const token = this.getToken(offset);
+        const token = this.getToken();
         if (token.value == null) {
             throw new Error("No token value");
         }
@@ -140,18 +140,18 @@ export class Lexer {
      * 現在のトークンが指定した条件を満たしていることを確認します。
      * 条件を満たしていなければSyntaxErrorを生成します。
     */
-    expect(kind: TokenKind, offset: number = 0): void {
+    expect(kind: TokenKind): void {
         parserLog.print("expect");
         parserLog.enter();
-        if (!this.match(kind, offset)) {
-            this.throwSyntaxError(`Expected ${getTokenString({ kind })}, but got ${getTokenString({ token: this.getToken(offset) })}`);
+        if (!this.match(kind)) {
+            this.throwSyntaxError(`Expected ${getTokenString({ kind })}, but got ${getTokenString({ token: this.getToken() })}`);
         }
         parserLog.leave();
     }
 
     /** SyntaxErrorを生成します。 */
     throwSyntaxError(message: string): never {
-        throw new Error(`${message} (${this.input.line}:${this.input.column})`);
+        throw new Error(`${message} (${this.input.getLine()}:${this.input.getColumn()})`);
     }
 
     private readToken(): Token {
@@ -168,18 +168,21 @@ export class Lexer {
 
             if (current.startsWith("\r\n")) {
                 input.forward(2);
+                input.commit();
                 spaceList.push(current.slice(0, 2));
                 lexerLog.print("CRLF");
                 continue;
             }
             if (current.startsWith("\r") || current.startsWith("\n")) {
                 input.forward(1);
+                input.commit();
                 spaceList.push(current.slice(0, 1));
                 lexerLog.print("CR or LF");
                 continue;
             }
             if (current.startsWith(" ") || current.startsWith("\t")) {
                 input.forward(1);
+                input.commit();
                 spaceList.push(current.slice(0, 1));
                 lexerLog.print("space or tab");
                 continue;
@@ -202,32 +205,33 @@ export class Lexer {
 
             if (/^[a-zA-Z0-9_]/.test(input.peek(1))) {
                 let value = "";
-                value += input.peek(1, 0);
-                let offset = 1;
-                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.peek(1, offset))) {
-                    value += input.peek(1, offset);
-                    offset++;
+                value += input.peek(1);
+                input.forward(1);
+                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.peek(1))) {
+                    value += input.peek(1);
+                    input.forward(1);
                 }
                 tokenList.push({ kind: TOKEN.Ident, source: value, value });
+                input.reset();
                 lexerLog.print(`found token: kind=${TOKEN.Ident}(${getTokenString({ kind: TOKEN.Ident })}) source="${value}"`);
             }
             if (input.peek(1) == "\"") {
                 let source = "";
                 let value = "";
-                let offset = 0;
-                source += input.peek(1, offset);
-                offset++;
+                source += input.peek(1);
+                input.forward(1);
                 while (!input.eof()) {
-                    if (input.peek(1, offset) === "\"") break;
-                    source += input.peek(1, offset);
-                    value += input.peek(1, offset);
-                    offset++;
+                    if (input.peek(1) === "\"") break;
+                    source += input.peek(1);
+                    value += input.peek(1);
+                    input.forward(1);
                 }
                 if (!input.eof()) {
-                    source += input.peek(1, offset);
-                    offset++;
+                    source += input.peek(1);
+                    input.forward(1);
                 }
                 tokenList.push({ kind: TOKEN.Str, source, value });
+                input.reset();
                 lexerLog.print(`found token: kind=${TOKEN.Str}(${getTokenString({ kind: TOKEN.Str })}) source="${source}"`);
             }
             if (current.startsWith("[")) {
@@ -246,6 +250,7 @@ export class Lexer {
                 }
                 if (tokenList[widestIndex].source.length > 0) {
                     input.forward(tokenList[widestIndex].source.length);
+                    input.commit();
                 }
                 lexerLog.print(`output token: kind=${tokenList[widestIndex].kind}(${getTokenString({ kind: tokenList[widestIndex].kind })}) source="${tokenList[widestIndex].source}"`);
                 lexerLog.leave();
@@ -296,30 +301,59 @@ export function getTokenString(specifier: TokenSpecifier): string {
 
 export class Input {
     source: string;
-    index: number;
-    line: number;
-    column: number;
+    private workState: {
+        index: number;
+        line: number;
+        column: number;
+    };
+    private commitState: {
+        index: number;
+        line: number;
+        column: number;
+    };
 
     constructor(source: string) {
         this.source = source;
-        this.index = 0;
-        this.line = 1;
-        this.column = 1;
+        this.workState = {
+            index: 0,
+            line: 1,
+            column: 1,
+        };
+        this.commitState = {
+            index: 0,
+            line: 1,
+            column: 1,
+        };
     }
 
     initialize(source: string) {
         this.source = source;
-        this.index = 0;
-        this.line = 1;
-        this.column = 1;
+        this.workState = {
+            index: 0,
+            line: 1,
+            column: 1,
+        };
+        this.commitState = {
+            index: 0,
+            line: 1,
+            column: 1,
+        };
+    }
+
+    getLine(): number {
+        return this.workState.line;
+    }
+
+    getColumn(): number {
+        return this.workState.column;
     }
 
     eof(): boolean {
-        return this.index >= this.source.length;
+        return this.workState.index >= this.source.length;
     }
 
-    peek(length: number, offset: number = 0): string {
-        return this.source.slice(this.index + offset, this.index + offset + length);
+    peek(length: number): string {
+        return this.source.slice(this.workState.index, this.workState.index + length);
     }
 
     forward(length: number): void {
@@ -332,14 +366,28 @@ export class Input {
             if (this.peek(1) === "\r") {
                 // ignore CR
             } else if (this.peek(1) === "\n") {
-                this.line++;
-                this.column = 1;
+                this.workState.line++;
+                this.workState.column = 1;
             } else {
-                this.column++;
+                this.workState.column++;
             }
-            this.index++;
+            this.workState.index++;
             length--;
         }
         inputLog.leave();
+    }
+
+    /** 現在位置を確定させます。 */
+    commit(): void {
+        this.commitState.index = this.workState.index;
+        this.commitState.line = this.workState.line;
+        this.commitState.column = this.workState.column;
+    }
+
+    /** 前回確定されたポイントまで現在位置を戻します。 */
+    reset(): void {
+        this.workState.index = this.commitState.index;
+        this.workState.line = this.commitState.line;
+        this.workState.column = this.commitState.column;
     }
 }
