@@ -4,6 +4,8 @@
 
 import { Lexer, TOKEN } from "./lexer.js";
 
+export type A_Node = A_Toplevel | A_Rule | A_Expr | A_OperatorGroup | A_ExprAtom | A_OperatorRule | A_LexerRule;
+
 export function parse(source: string): A_Toplevel[] {
     const p = new Lexer(source);
 
