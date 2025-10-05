@@ -309,25 +309,76 @@ function parseLexerRule(p: Lexer): A_LexerRule {
 
     p.forwardWithExpect(TOKEN.Equal);
 
-    const expr = parseLexerAtom(p);
+    const expr = parseLexerExpr1(p);
 
     p.forwardWithExpect(TOKEN.Semi);
 
     return { kind: "LexerRule", name, expr };
 }
 
+
+export type A_LexerExpr = A_LexerAlternate | A_LexerSequence | A_AnyChar | A_Str | A_CharRange | A_Ref | A_EOF;
+export type A_LexerAlternate = { kind: "LexerAlternate"; exprs: A_LexerExpr[]; };
+
+function parseLexerExpr1(p: Lexer): A_LexerExpr {
+    const children: A_LexerExpr[] = [];
+
+    children.push(parseLexerExpr2(p));
+
+    while (p.match(TOKEN.Slash)) {
+        p.forward();
+        children.push(parseLexerExpr2(p));
+    }
+
+    if (children.length === 1) {
+        return children[0];
+    } else {
+        return { kind: "LexerAlternate", exprs: children } satisfies A_LexerAlternate;
+    }
+}
+
+
+export type A_LexerSequence = { kind: "LexerSequence"; exprs: A_LexerExpr[]; };
+
+function parseLexerExpr2(p: Lexer): A_LexerExpr {
+    const children: A_LexerExpr[] = [];
+
+    while (p.match(TOKEN.Amp) || p.match(TOKEN.Excl) || p.match(TOKEN.OpenParen) || p.match(TOKEN.Dot) || p.match(TOKEN.Dollar) || p.match(TOKEN.Str) || p.match(TOKEN.CharRange) || p.match(TOKEN.Ident)) {
+        children.push(parseLexerExpr3(p));
+    }
+
+    if (children.length === 1) {
+        return children[0];
+    } else if (children.length > 1) {
+        return { kind: "LexerSequence", exprs: children } satisfies A_LexerSequence;
+    } else {
+        p.throwSyntaxError("unexpected token");
+    }
+}
+
+
+function parseLexerExpr3(p: Lexer): A_LexerExpr {
+    // TODO
+
+    const expr = parseLexerAtom(p);
+
+    // TODO
+
+    return expr;
+}
+
+
 export type A_AnyChar = { kind: "AnyChar"; };
 export type A_Str = { kind: "Str"; value: string; };
 export type A_CharRange = { kind: "CharRange"; };
 export type A_EOF = { kind: "EOF"; };
-export type A_LexerExpr = A_AnyChar | A_Str | A_CharRange | A_Ref | A_EOF;
 
 function parseLexerAtom(p: Lexer): A_LexerExpr {
     if (p.match(TOKEN.OpenParen)) {
         p.forward();
-        // TODO
+        const expr = parseLexerExpr1(p);
         p.forwardWithExpect(TOKEN.CloseParen);
-        throw new Error("not implemented yet");
+        return expr;
     } else if (p.match(TOKEN.Dot)) {
         p.forward();
         return { kind: "AnyChar" };

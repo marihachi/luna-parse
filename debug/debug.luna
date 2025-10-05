@@ -22,7 +22,9 @@ parser DebugParser {
 }
 
 lexer DebugLexer {
-    token Token1 = [a-zA-Z0-9];
+    token Token1 = [a-zA-Z] [a-zA-Z0-9];
     token Token2 = "abc";
     token Token3 = .;
+    token Token3 = $;
+    token Spacing = " " / "\t" / "\r\n" / "\n";
 }
