@@ -288,7 +288,7 @@ function parseLexerBlock(p: Lexer): A_LexerBlock {
 }
 
 
-export type A_LexerRule = { kind: "LexerRule"; name: string; children: string };
+export type A_LexerRule = { kind: "LexerRule"; name: string; expr: A_LexerExpr };
 
 function parseLexerRule(p: Lexer): A_LexerRule {
     let ruleAttr: "none" | "token" | "ignoredToken" = "none";
@@ -309,16 +309,43 @@ function parseLexerRule(p: Lexer): A_LexerRule {
 
     p.forwardWithExpect(TOKEN.Equal);
 
-    // TODO
-    let children: string | undefined;
-    if (p.match(TOKEN.Ident)) {
-        children = p.getValue();
-        p.forward();
-    } else {
-        p.throwSyntaxError("unexpected token");
-    }
+    const expr = parseLexerAtom(p);
 
     p.forwardWithExpect(TOKEN.Semi);
 
-    return { kind: "LexerRule", name, children };
+    return { kind: "LexerRule", name, expr };
+}
+
+export type A_AnyChar = { kind: "AnyChar"; };
+export type A_Str = { kind: "Str"; value: string; };
+export type A_CharRange = { kind: "CharRange"; };
+export type A_EOF = { kind: "EOF"; };
+export type A_LexerExpr = A_AnyChar | A_Str | A_CharRange | A_Ref | A_EOF;
+
+function parseLexerAtom(p: Lexer): A_LexerExpr {
+    if (p.match(TOKEN.OpenParen)) {
+        p.forward();
+        // TODO
+        p.forwardWithExpect(TOKEN.CloseParen);
+        throw new Error("not implemented yet");
+    } else if (p.match(TOKEN.Dot)) {
+        p.forward();
+        return { kind: "AnyChar" };
+    } else if (p.match(TOKEN.Dollar)) {
+        p.forward();
+        return { kind: "EOF" };
+    } else if (p.match(TOKEN.Str)) {
+        const value = p.getValue();
+        p.forward();
+        return { kind: "Str", value };
+    } else if (p.match(TOKEN.CharRange)) {
+        p.forward();
+        return { kind: "CharRange" };
+    } else if (p.match(TOKEN.Ident)) {
+        const name = p.getValue();
+        p.forward();
+        return { kind: "Ref", name };
+    } else {
+        p.throwSyntaxError("unexpected token");
+    }
 }

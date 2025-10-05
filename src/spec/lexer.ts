@@ -236,8 +236,20 @@ export class Lexer {
             }
             if (current.startsWith("[")) {
                 // TODO: CharRange
-                lexerLog.leave();
-                this.throwSyntaxError("not implemented yet");
+                let source = "";
+                while (!input.eof()) {
+                    if (input.peek(1) === "]") break;
+                    source += input.peek(1);
+                    //value += input.peek(1);
+                    input.forward(1);
+                }
+                if (!input.eof()) {
+                    source += input.peek(1);
+                    input.forward(1);
+                }
+                input.reset();
+                tokenList.push({ kind: TOKEN.CharRange, source });
+                lexerLog.print(`found token: kind=${TOKEN.CharRange}(${getTokenString({ kind: TOKEN.CharRange })}) source="${source}"`);
             }
 
             if (tokenList.length >= 0) {

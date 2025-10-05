@@ -22,6 +22,7 @@ parser DebugParser {
 }
 
 lexer DebugLexer {
-    token Token1 = Sub1;
-    token Token2 = Sub2;
+    token Token1 = [a-zA-Z0-9];
+    token Token2 = "abc";
+    token Token3 = .;
 }
