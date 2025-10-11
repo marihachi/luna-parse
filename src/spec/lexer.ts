@@ -190,7 +190,7 @@ export class Lexer {
 
             if (current === "") {
                 tokenList.push({ kind: 0, source: "" });
-                lexerLog.print(`found token: kind=${0}(${getTokenString({ kind: 0 })}) source=""`);
+                lexerLog.print(() => `found token: kind=${0}(${getTokenString({ kind: 0 })}) source=""`);
             }
 
             for (let i = 0; i < constantList.length; i++) {
@@ -198,7 +198,7 @@ export class Lexer {
                 if (constant.source.length > 0) {
                     if (current.startsWith(constant.source)) {
                         tokenList.push({ kind: constant.kind, source: constant.source });
-                        lexerLog.print(`found token: kind=${constant.kind}(${getTokenString({ kind: constant.kind })}) source="${constant.source}"`);
+                        lexerLog.print(() => `found token: kind=${constant.kind}(${getTokenString({ kind: constant.kind })}) source="${constant.source}"`);
                     }
                 }
             }
@@ -213,7 +213,7 @@ export class Lexer {
                 }
                 tokenList.push({ kind: TOKEN.Ident, source: value, value });
                 input.reset();
-                lexerLog.print(`found token: kind=${TOKEN.Ident}(${getTokenString({ kind: TOKEN.Ident })}) source="${value}"`);
+                lexerLog.print(() => `found token: kind=${TOKEN.Ident}(${getTokenString({ kind: TOKEN.Ident })}) source="${value}"`);
             }
             if (input.peek(1) == "\"") {
                 let source = "";
@@ -232,7 +232,7 @@ export class Lexer {
                 }
                 tokenList.push({ kind: TOKEN.Str, source, value });
                 input.reset();
-                lexerLog.print(`found token: kind=${TOKEN.Str}(${getTokenString({ kind: TOKEN.Str })}) source="${source}"`);
+                lexerLog.print(() => `found token: kind=${TOKEN.Str}(${getTokenString({ kind: TOKEN.Str })}) source="${source}"`);
             }
             if (current.startsWith("[")) {
                 // TODO: CharRange
@@ -249,12 +249,13 @@ export class Lexer {
                 }
                 input.reset();
                 tokenList.push({ kind: TOKEN.CharRange, source });
-                lexerLog.print(`found token: kind=${TOKEN.CharRange}(${getTokenString({ kind: TOKEN.CharRange })}) source="${source}"`);
+                lexerLog.print(() => `found token: kind=${TOKEN.CharRange}(${getTokenString({ kind: TOKEN.CharRange })}) source="${source}"`);
             }
 
-            if (tokenList.length >= 0) {
+            if (tokenList.length > 0) {
                 // マッチしたトークンのうち、最も長いトークンとして読み取る。同じ長さの場合は先に現れたトークンが優先。
                 let widestIndex = 0;
+                lexerLog.print(() => `found tokens: ${JSON.stringify(tokenList)}`);
                 for (let i = 1; i < tokenList.length; i++) {
                     if (tokenList[i].source.length > tokenList[widestIndex].source.length) {
                         widestIndex = i;
@@ -264,7 +265,7 @@ export class Lexer {
                     input.forward(tokenList[widestIndex].source.length);
                     input.commit();
                 }
-                lexerLog.print(`output token: kind=${tokenList[widestIndex].kind}(${getTokenString({ kind: tokenList[widestIndex].kind })}) source="${tokenList[widestIndex].source}"`);
+                lexerLog.print(() => `output token: kind=${tokenList[widestIndex].kind}(${getTokenString({ kind: tokenList[widestIndex].kind })}) source="${tokenList[widestIndex].source}"`);
                 lexerLog.leave();
                 return createToken(tokenList[widestIndex].kind, { value: tokenList[widestIndex].value });
             } else {
@@ -369,7 +370,7 @@ export class Input {
     }
 
     forward(length: number): void {
-        inputLog.print(`Input.forward length=${length}`);
+        inputLog.print(() => `Input.forward length=${length}`);
         inputLog.enter();
         while (length > 0) {
             if (this.eof()) {

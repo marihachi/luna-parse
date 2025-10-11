@@ -317,8 +317,13 @@ function parseLexerRule(p: Lexer): A_LexerRule {
 }
 
 
-export type A_LexerExpr = A_LexerAlternate | A_LexerSequence | A_AnyChar | A_Str | A_CharRange | A_Ref | A_EOF;
+export type A_LexerExpr = A_LexerAlternate | A_LexerSequence | A_LexerMany | A_LexerOption | A_LexerMatch | A_LexerNotMatch | A_AnyChar | A_Str | A_CharRange | A_Ref | A_EOF;
 export type A_LexerAlternate = { kind: "LexerAlternate"; exprs: A_LexerExpr[]; };
+export type A_LexerMany = { kind: "LexerMany"; minimum: number; expr: A_LexerExpr; };
+export type A_LexerOption = { kind: "LexerOption"; expr: A_LexerExpr; };
+export type A_LexerMatch = { kind: "LexerMatch"; expr: A_LexerExpr; };
+export type A_LexerNotMatch = { kind: "LexerNotMatch"; expr: A_LexerExpr; };
+
 
 function parseLexerExpr1(p: Lexer): A_LexerExpr {
     const children: A_LexerExpr[] = [];
@@ -358,13 +363,61 @@ function parseLexerExpr2(p: Lexer): A_LexerExpr {
 
 
 function parseLexerExpr3(p: Lexer): A_LexerExpr {
-    // TODO
+    const expr = parseLexerExpr4(p);
+
+    let op: { kind: "LexerMany", minimum: number } | { kind: "LexerOption" } | undefined;
+    if (p.match(TOKEN.Aste) || p.match(TOKEN.Plus) || p.match(TOKEN.Ques)) {
+        op = parseLexerExpr3_0(p);
+    }
+
+    if (op != null) {
+        return { ...op, expr };
+    } else {
+        return expr;
+    }
+}
+
+function parseLexerExpr3_0(p: Lexer): { kind: "LexerMany", minimum: number } | { kind: "LexerOption" } {
+    if (p.match(TOKEN.Aste)) {
+        p.forward();
+        return { kind: "LexerMany", minimum: 0 };
+    } else if (p.match(TOKEN.Plus)) {
+        p.forward();
+        return { kind: "LexerMany", minimum: 1 };
+    } else if (p.match(TOKEN.Ques)) {
+        p.forward();
+        return { kind: "LexerOption" };
+    } else {
+        p.throwSyntaxError("unexpected token");
+    }
+}
+
+
+function parseLexerExpr4(p: Lexer): A_LexerExpr {
+    let op: { kind: "LexerMatch" } | { kind: "LexerNotMatch" } | undefined;
+    if (p.match(TOKEN.Amp) || p.match(TOKEN.Excl)) {
+        op = parseLexerExpr4_0(p);
+    }
 
     const expr = parseLexerAtom(p);
 
-    // TODO
+    if (op != null) {
+        return { ...op, expr };
+    } else {
+        return expr;
+    }
+}
 
-    return expr;
+function parseLexerExpr4_0(p: Lexer): { kind: "LexerMatch" } | { kind: "LexerNotMatch" } {
+    if (p.match(TOKEN.Amp)) {
+        p.forward();
+        return { kind: "LexerMatch" };
+    } else if (p.match(TOKEN.Excl)) {
+        p.forward();
+        return { kind: "LexerNotMatch" };
+    } else {
+        p.throwSyntaxError("unexpected token");
+    }
 }
 
 

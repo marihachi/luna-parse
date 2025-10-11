@@ -25,9 +25,10 @@ export class Logger {
         }
     }
 
-    print(message: string) {
+    print(message: (() => string) | string) {
         if (this.enabled) {
-            console.log(`${"  ".repeat(this.getIndent())}${message}`);
+            const messageValue = typeof message === "string" ? message : message();
+            console.log(`${"  ".repeat(this.getIndent())}${messageValue}`);
         }
     }
 }
