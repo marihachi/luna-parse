@@ -23,7 +23,7 @@ parser SpecParser {
 
 lexer SpecLexer {
     token EOF = $;
-    ignored token Spacing = " " / "\t" / "\r\n" / "\n";
+    ignored token Spacing = " " / "\t" / "\r\n" / "\r" / "\n";
     token Aste = "*";
     token Plus = "+";
     token Excl = "!";

@@ -158,63 +158,57 @@ export class Lexer {
         const input = this.input;
 
         const tokenList: { kind: TokenKind; source: string; value?: string; }[] = [];
-        const spaceList: string[] = [];
 
-        lexerLog.print("readToken");
+        lexerLog.print(`readToken (${this.input.getLine()}:${this.input.getColumn()})`);
         lexerLog.enter();
 
         while (true) {
             let current = input.peek(10);
 
+            // EOF
+            if (current === "") {
+                tokenList.push({ kind: 0, source: "" });
+            }
+
+            // Spacing
+            if (current.startsWith(" ")) {
+                input.forward(1);
+                input.commit();
+                continue;
+            }
+            if (current.startsWith("\t")) {
+                input.forward(1);
+                input.commit();
+                continue;
+            }
             if (current.startsWith("\r\n")) {
                 input.forward(2);
                 input.commit();
-                spaceList.push(current.slice(0, 2));
-                lexerLog.print("CRLF");
                 continue;
             }
-            if (current.startsWith("\r") || current.startsWith("\n")) {
+            if (current.startsWith("\r")) {
                 input.forward(1);
                 input.commit();
-                spaceList.push(current.slice(0, 1));
-                lexerLog.print("CR or LF");
                 continue;
             }
-            if (current.startsWith(" ") || current.startsWith("\t")) {
+            if (current.startsWith("\n")) {
                 input.forward(1);
                 input.commit();
-                spaceList.push(current.slice(0, 1));
-                lexerLog.print("space or tab");
                 continue;
             }
 
-            if (current === "") {
-                tokenList.push({ kind: 0, source: "" });
-                lexerLog.print(() => `found token: kind=${0}(${getTokenString({ kind: 0 })}) source=""`);
-            }
-
+            // Aste Plus Excl Amp Ques Slash Dot Dollar Arrow Equal Semi OpenBracket CloseBracket OpenParen CloseParen
+            // Parser Lexer Ignored Token Expression Atom Prefix Infix Postfix Operator Group 
             for (let i = 0; i < constantList.length; i++) {
                 const constant = constantList[i];
                 if (constant.source.length > 0) {
                     if (current.startsWith(constant.source)) {
                         tokenList.push({ kind: constant.kind, source: constant.source });
-                        lexerLog.print(() => `found token: kind=${constant.kind}(${getTokenString({ kind: constant.kind })}) source="${constant.source}"`);
                     }
                 }
             }
 
-            if (/^[a-zA-Z0-9_]/.test(input.peek(1))) {
-                let value = "";
-                value += input.peek(1);
-                input.forward(1);
-                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.peek(1))) {
-                    value += input.peek(1);
-                    input.forward(1);
-                }
-                tokenList.push({ kind: TOKEN.Ident, source: value, value });
-                input.reset();
-                lexerLog.print(() => `found token: kind=${TOKEN.Ident}(${getTokenString({ kind: TOKEN.Ident })}) source="${value}"`);
-            }
+            // Str
             if (input.peek(1) == "\"") {
                 let source = "";
                 let value = "";
@@ -232,14 +226,15 @@ export class Lexer {
                 }
                 tokenList.push({ kind: TOKEN.Str, source, value });
                 input.reset();
-                lexerLog.print(() => `found token: kind=${TOKEN.Str}(${getTokenString({ kind: TOKEN.Str })}) source="${source}"`);
             }
+
+            // CharRange
             if (current.startsWith("[")) {
-                // TODO: CharRange
                 let source = "";
                 while (!input.eof()) {
                     if (input.peek(1) === "]") break;
                     source += input.peek(1);
+                    // TODO
                     //value += input.peek(1);
                     input.forward(1);
                 }
@@ -249,7 +244,19 @@ export class Lexer {
                 }
                 input.reset();
                 tokenList.push({ kind: TOKEN.CharRange, source });
-                lexerLog.print(() => `found token: kind=${TOKEN.CharRange}(${getTokenString({ kind: TOKEN.CharRange })}) source="${source}"`);
+            }
+
+            // Ident
+            if (/^[a-zA-Z_]/.test(input.peek(1))) {
+                let value = "";
+                value += input.peek(1);
+                input.forward(1);
+                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.peek(1))) {
+                    value += input.peek(1);
+                    input.forward(1);
+                }
+                tokenList.push({ kind: TOKEN.Ident, source: value, value });
+                input.reset();
             }
 
             if (tokenList.length > 0) {
