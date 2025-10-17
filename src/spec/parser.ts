@@ -2,7 +2,7 @@
 
 // parser for luna-parse spec
 
-import { Lexer, TOKEN } from "./lexer.js";
+import { getTokenString, Lexer, TOKEN } from "./lexer.js";
 
 export type A_Node = A_Toplevel | A_Rule | A_Expr | A_OperatorGroup | A_ExprAtom | A_OperatorRule | A_LexerRule;
 
@@ -14,7 +14,10 @@ export function parse(source: string): A_Toplevel[] {
         children.push(parseToplevel(p));
     }
 
-    p.forwardWithExpect(TOKEN.EOF);
+    // expect EOF
+    if (!p.match(TOKEN.EOF)) {
+        p.throwParserError(`unexpected token ${getTokenString({ token: p.getToken() })}`);
+    }
 
     return children;
 }
@@ -28,7 +31,7 @@ function parseToplevel(p: Lexer): A_Toplevel {
     } else if (p.match(TOKEN.Lexer)) {
         return parseLexerBlock(p);
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -109,7 +112,7 @@ function parseExpr2(p: Lexer): A_Expr {
     } else if (children.length > 1) {
         return { kind: "Sequence", exprs: children } satisfies A_Sequence;
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -139,7 +142,7 @@ function parseExpr3_0(p: Lexer, expr: A_Expr): A_Expr {
         p.forward();
         return { kind: "Option", expr } satisfies A_Option;
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -155,7 +158,7 @@ function parseParserAtom(p: Lexer): A_Expr {
     } else if (p.match(TOKEN.Ident)) {
         return parseRef(p);
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -195,7 +198,7 @@ function parseExpressionBlock_0(p: Lexer): A_OperatorGroup | A_ExprAtom {
     } else if (p.match(TOKEN.Operator)) {
         return parseOperatorGroup(p);
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -260,7 +263,7 @@ function parseOperatorRule_0(p: Lexer): string {
         p.forward();
         return "postfix";
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -357,7 +360,7 @@ function parseLexerExpr2(p: Lexer): A_LexerExpr {
     } else if (children.length > 1) {
         return { kind: "LexerSequence", exprs: children } satisfies A_LexerSequence;
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -388,7 +391,7 @@ function parseLexerExpr3_0(p: Lexer): { kind: "LexerMany", minimum: number } | {
         p.forward();
         return { kind: "LexerOption" };
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -416,7 +419,7 @@ function parseLexerExpr4_0(p: Lexer): { kind: "LexerMatch" } | { kind: "LexerNot
         p.forward();
         return { kind: "LexerNotMatch" };
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }
 
@@ -450,6 +453,6 @@ function parseLexerAtom(p: Lexer): A_LexerExpr {
         p.forward();
         return { kind: "Ref", name };
     } else {
-        p.throwSyntaxError("unexpected token");
+        p.throwParserError("unexpected token");
     }
 }

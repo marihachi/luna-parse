@@ -13,14 +13,23 @@ export type TokenKind = typeof TOKEN extends Record<string, infer V> ? V : never
 
 export type Token = {
     kind: TokenKind;
+    startPosition: { line: number; column: number; };
+    endPosition: { line: number; column: number; };
     leadingTrivia?: string;
     value?: string;
 };
 
-export function createToken(kind: TokenKind, opts?: { value?: string; leadingTrivia?: string; }): Token {
+export function createToken(
+    kind: TokenKind,
+    startPosition: { line: number; column: number; },
+    endPosition: { line: number; column: number; },
+    opts?: { value?: string; leadingTrivia?: string; }
+): Token {
     opts = opts || {};
     return {
         kind,
+        startPosition,
+        endPosition,
         leadingTrivia: opts.leadingTrivia,
         value: opts.value,
     };
@@ -144,14 +153,16 @@ export class Lexer {
         parserLog.print("expect");
         parserLog.enter();
         if (!this.match(kind)) {
-            this.throwSyntaxError(`Expected ${getTokenString({ kind })}, but got ${getTokenString({ token: this.getToken() })}`);
+            this.throwParserError(`Expected ${getTokenString({ kind })}, but got ${getTokenString({ token: this.getToken() })}`);
         }
         parserLog.leave();
     }
 
-    /** SyntaxErrorを生成します。 */
-    throwSyntaxError(message: string): never {
-        throw new Error(`${message} (${this.input.getLine()}:${this.input.getColumn()})`);
+    /** 構文解析用のエラーを生成します。 */
+    throwParserError(message: string): never {
+        // 構文解析では現在のトークンの開始位置を表示
+        const position = this.getToken().startPosition;
+        throw new Error(`${message} (${position.line}:${position.column})`);
     }
 
     private readToken(): Token {
@@ -159,7 +170,7 @@ export class Lexer {
 
         const tokenList: { kind: TokenKind; source: string; value?: string; }[] = [];
 
-        lexerLog.print(`readToken (${this.input.getLine()}:${this.input.getColumn()})`);
+        lexerLog.print(() => `readToken (${this.input.getPosition().line}:${this.input.getPosition().column})`);
         lexerLog.enter();
 
         while (true) {
@@ -217,9 +228,7 @@ export class Lexer {
                     value += input.peek(1);
                     input.forward(1);
                 }
-                if (!input.eof()) {
-                    input.forward(1);
-                }
+                input.forwardWithExpect("\"");
                 const source = input.getWorking();
                 input.reset();
                 tokenList.push({ kind: TOKEN.Str, source, value });
@@ -232,9 +241,7 @@ export class Lexer {
                     // TODO: value
                     input.forward(1);
                 }
-                if (!input.eof()) {
-                    input.forward(1);
-                }
+                input.forwardWithExpect("]");
                 const source = input.getWorking();
                 input.reset();
                 tokenList.push({ kind: TOKEN.CharRange, source });
@@ -264,17 +271,19 @@ export class Lexer {
                         widestIndex = i;
                     }
                 }
+                const startPosition = input.getPosition();
                 if (tokenList[widestIndex].source.length > 0) {
                     input.forward(tokenList[widestIndex].source.length);
                     input.commit();
                 }
+                const endPosition = input.getPosition();
                 lexerLog.print(() => `output token: kind=${tokenList[widestIndex].kind}(${getTokenString({ kind: tokenList[widestIndex].kind })}) source="${tokenList[widestIndex].source}"`);
                 lexerLog.leave();
-                return createToken(tokenList[widestIndex].kind, { value: tokenList[widestIndex].value });
+                return createToken(tokenList[widestIndex].kind, startPosition, endPosition, { value: tokenList[widestIndex].value });
             } else {
                 lexerLog.print("unexpected char");
                 lexerLog.leave();
-                this.throwSyntaxError(`unexpected char '${input.peek(1)}'`);
+                this.throwParserError(`unexpected char '${input.peek(1)}'`);
             }
         }
     }
@@ -356,12 +365,8 @@ export class Input {
         };
     }
 
-    getLine(): number {
-        return this.workState.line;
-    }
-
-    getColumn(): number {
-        return this.workState.column;
+    getPosition(): { line: number; column: number; } {
+        return { line: this.workState.line, column: this.workState.column };
     }
 
     eof(): boolean {
@@ -399,6 +404,15 @@ export class Input {
         inputLog.leave();
     }
 
+    forwardWithExpect(span: string) {
+        if (this.peek(span.length) != span) {
+            const c = this.peek(1);
+            const actual = c.length > 0 ? `char '${c}'` : "EOF";
+            this.throwLexerError(`expected "${span}", but get ${actual}`);
+        }
+        this.forward(span.length);
+    }
+
     /** 確定前の作業を確定します。 */
     commit(): void {
         this.commitState.index = this.workState.index;
@@ -411,5 +425,12 @@ export class Input {
         this.workState.index = this.commitState.index;
         this.workState.line = this.commitState.line;
         this.workState.column = this.commitState.column;
+    }
+
+    /** 字句解析用のエラーを生成します。 */
+    throwLexerError(message: string): never {
+        // 字句解析では読み取った最後の位置を表示
+        const position = this.getPosition();
+        throw new Error(`${message} (${position.line}:${position.column})`);
     }
 }
