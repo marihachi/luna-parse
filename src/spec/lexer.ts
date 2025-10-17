@@ -210,38 +210,33 @@ export class Lexer {
 
             // Str
             if (input.peek(1) == "\"") {
-                let source = "";
-                let value = "";
-                source += input.peek(1);
                 input.forward(1);
+                let value = "";
                 while (!input.eof()) {
                     if (input.peek(1) === "\"") break;
-                    source += input.peek(1);
                     value += input.peek(1);
                     input.forward(1);
                 }
                 if (!input.eof()) {
-                    source += input.peek(1);
                     input.forward(1);
                 }
-                tokenList.push({ kind: TOKEN.Str, source, value });
+                const source = input.getWorking();
                 input.reset();
+                tokenList.push({ kind: TOKEN.Str, source, value });
             }
 
             // CharRange
             if (current.startsWith("[")) {
-                let source = "";
                 while (!input.eof()) {
                     if (input.peek(1) === "]") break;
-                    source += input.peek(1);
                     // TODO
                     //value += input.peek(1);
                     input.forward(1);
                 }
                 if (!input.eof()) {
-                    source += input.peek(1);
                     input.forward(1);
                 }
+                const source = input.getWorking();
                 input.reset();
                 tokenList.push({ kind: TOKEN.CharRange, source });
             }
@@ -255,8 +250,9 @@ export class Lexer {
                     value += input.peek(1);
                     input.forward(1);
                 }
-                tokenList.push({ kind: TOKEN.Ident, source: value, value });
+                const source = input.getWorking();
                 input.reset();
+                tokenList.push({ kind: TOKEN.Ident, source, value });
             }
 
             if (tokenList.length > 0) {
@@ -376,6 +372,12 @@ export class Input {
         return this.source.slice(this.workState.index, this.workState.index + length);
     }
 
+    /** 確定前の作業として保持されている文字列を取得します。 */
+    getWorking(): string {
+        return this.source.slice(this.commitState.index, this.workState.index);
+    }
+
+    /** 現在位置を進めます。操作した後の現在位置は確定前の作業として保持されます。 */
     forward(length: number): void {
         inputLog.print(() => `Input.forward length=${length}`);
         inputLog.enter();
@@ -397,14 +399,14 @@ export class Input {
         inputLog.leave();
     }
 
-    /** 現在位置を確定させます。 */
+    /** 確定前の作業を確定します。 */
     commit(): void {
         this.commitState.index = this.workState.index;
         this.commitState.line = this.workState.line;
         this.commitState.column = this.workState.column;
     }
 
-    /** 前回確定されたポイントまで現在位置を戻します。 */
+    /** 確定前の作業を破棄します。 */
     reset(): void {
         this.workState.index = this.commitState.index;
         this.workState.line = this.commitState.line;
