@@ -212,8 +212,8 @@ export class Lexer {
             if (input.peek(1) == "\"") {
                 input.forward(1);
                 let value = "";
-                while (!input.eof()) {
-                    if (input.peek(1) === "\"") break;
+                while (true) {
+                    if (input.eof() || input.peek(1) === "\"") break;
                     value += input.peek(1);
                     input.forward(1);
                 }
@@ -227,10 +227,9 @@ export class Lexer {
 
             // CharRange
             if (current.startsWith("[")) {
-                while (!input.eof()) {
-                    if (input.peek(1) === "]") break;
-                    // TODO
-                    //value += input.peek(1);
+                while (true) {
+                    if (input.eof() || input.peek(1) === "]") break;
+                    // TODO: value
                     input.forward(1);
                 }
                 if (!input.eof()) {
@@ -246,7 +245,8 @@ export class Lexer {
                 let value = "";
                 value += input.peek(1);
                 input.forward(1);
-                while (!input.eof() && /^[a-zA-Z0-9_]/.test(input.peek(1))) {
+                while (true) {
+                    if (input.eof() || !/^[a-zA-Z0-9_]/.test(input.peek(1))) break;
                     value += input.peek(1);
                     input.forward(1);
                 }
